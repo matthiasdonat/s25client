@@ -83,8 +83,8 @@ void nofScout_Free::lostWork()
 
 bool nofScout_Free::isValidRangedTarget() const
 {
-    // Free scouts are always out in the world
-    return true;
+    // Scouts walking on a road (to their flag or home) are not shootable as the road would stay blocked
+    return !isWalkingOnRoad();
 }
 
 void nofScout_Free::killByRangedHit()

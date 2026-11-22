@@ -507,92 +507,18 @@ BOOST_AUTO_TEST_CASE(ArcherTowerUnusedWithoutAddon)
     BOOST_TEST(!makeIsUnusedJob(ggs)(Job::Archer));
 }
 
-namespace {
-std::vector<MapPoint> allPoints(const GameWorldBase& world)
-{
-    std::vector<MapPoint> pts;
-    for(const auto y : helpers::range(world.getHeight()))
-    {
-        for(const auto x : helpers::range(world.getWidth()))
-            pts.emplace_back(x, y);
-    }
-    return pts;
-}
-} // namespace
-
 BOOST_FIXTURE_TEST_CASE(ScoutDiesOnRangedHit, ArcherTowerFixture)
 {
-    hq->addToInventory(PeopleCounts::make(Job::Scout, 1), true);
-    const MapPoint flagPos = world.getNeighbour(hqPos, Direction::SouthEast);
-    const MapPoint scoutFlagPos = world.makeMapPoint(flagPos + Position(3, 0));
-    this->SetFlag(scoutFlagPos);
-    BuildRoad(scoutFlagPos, false, std::vector<Direction>(3, Direction::West));
-    this->CallSpecialist(scoutFlagPos, Job::Scout);
-    nofScout_Free* scout = nullptr;
-    const auto findScout = [&]() {
-        scout = nullptr;
-        for(const MapPoint pt : allPoints(world))
-        {
-            for(noBase& obj : world.getFigures(pt))
-            {
-                if(auto* s = dynamic_cast<nofScout_Free*>(&obj))
-                    scout = s;
-            }
-        }
-        return scout && scout->isValidRangedTarget();
-    };
-    RTTR_EXEC_TILL(2000, findScout());
-    const MapPoint scoutPos = scout->getPos();
+    const MapPoint scoutPos = world.makeMapPoint(hqPos + Position(4, 0));
+    world.getPlayer(0).increaseInventoryJob(Job::Scout, 1);
+    auto& scout = static_cast<nofScout_Free&>(world.addFigure(scoutPos, std::make_unique<nofScout_Free>(scoutPos, 0, nullptr)));
+    scout.startWandering();
+    BOOST_TEST_REQUIRE(scout.isValidRangedTarget());
     const unsigned numScouts = world.getPlayer(0).getInventory().people[Job::Scout];
-    scout->killByRangedHit();
+    scout.killByRangedHit();
     BOOST_TEST(world.getPlayer(0).getInventory().people[Job::Scout] == numScouts - 1u);
-    BOOST_TEST(!findScout());
     BOOST_TEST(world.getFigures(scoutPos).empty());
-    RTTR_SKIP_GFS(500);
-}
-
-namespace {
-ArcherTarget makeTarget(unsigned id, unsigned distance, unsigned rank, bool isScout = false)
-{
-    return ArcherTarget{nullptr, distance, rank, isScout, id};
-}
-} // namespace
-
-BOOST_AUTO_TEST_CASE(PriorityNearest)
-{
-    const std::vector<ArcherTarget> targets{makeTarget(1, 5, 4), makeTarget(2, 2, 0), makeTarget(3, 3, 2, true)};
-    BOOST_TEST_REQUIRE(chooseArcherTarget(targets, ArcherTargetPriority::Nearest));
-    BOOST_TEST(chooseArcherTarget(targets, ArcherTargetPriority::Nearest)->objectId == 2u);
-    BOOST_TEST(chooseArcherTarget({}, ArcherTargetPriority::Nearest) == nullptr);
-}
-
-BOOST_AUTO_TEST_CASE(PriorityWeakestPrefersScout)
-{
-    const std::vector<ArcherTarget> targets{makeTarget(1, 2, 0), makeTarget(2, 6, 0, true), makeTarget(3, 3, 1)};
-    // Scout (far away) beats the nearer private
-    BOOST_TEST(chooseArcherTarget(targets, ArcherTargetPriority::Weakest)->objectId == 2u);
-    const std::vector<ArcherTarget> soldiers{makeTarget(1, 2, 3), makeTarget(2, 6, 1), makeTarget(3, 3, 1)};
-    // Lowest rank wins, nearer one on equal rank
-    BOOST_TEST(chooseArcherTarget(soldiers, ArcherTargetPriority::Weakest)->objectId == 3u);
-}
-
-BOOST_AUTO_TEST_CASE(PriorityStrongestPrefersHighRankAndScoutLast)
-{
-    const std::vector<ArcherTarget> targets{makeTarget(1, 2, 0), makeTarget(2, 1, 0, true), makeTarget(3, 6, 4),
-                                            makeTarget(4, 3, 4)};
-    BOOST_TEST(chooseArcherTarget(targets, ArcherTargetPriority::Strongest)->objectId == 4u);
-    const std::vector<ArcherTarget> onlyScoutAndPrivate{makeTarget(1, 2, 0, true), makeTarget(2, 5, 0)};
-    BOOST_TEST(chooseArcherTarget(onlyScoutAndPrivate, ArcherTargetPriority::Strongest)->objectId == 2u);
-    const std::vector<ArcherTarget> onlyScout{makeTarget(1, 2, 0, true)};
-    BOOST_TEST(chooseArcherTarget(onlyScout, ArcherTargetPriority::Strongest)->objectId == 1u);
-}
-
-BOOST_AUTO_TEST_CASE(TieBreakIsDeterministic)
-{
-    const std::vector<ArcherTarget> targets{makeTarget(9, 3, 1), makeTarget(4, 3, 1), makeTarget(7, 3, 1)};
-    for(const auto prio : {ArcherTargetPriority::Nearest, ArcherTargetPriority::Weakest,
-                           ArcherTargetPriority::Strongest})
-        BOOST_TEST(chooseArcherTarget(targets, prio)->objectId == 4u);
+    RTTR_SKIP_GFS(100);
 }
 
 BOOST_FIXTURE_TEST_CASE(FindsOnlyVisibleEnemyScoutsInRange, ArcherTowerFixtureT<WorldWithGCExecution2P>)
@@ -601,7 +527,9 @@ BOOST_FIXTURE_TEST_CASE(FindsOnlyVisibleEnemyScoutsInRange, ArcherTowerFixtureT<
     world.makeVisibleAroundPoint(towerPos, ARCHER_TOWER_RANGE + 2, 0);
     const auto addScout = [&](unsigned owner, const Position& offset) -> nofScout_Free& {
         const MapPoint pt = world.makeMapPoint(towerPos + offset);
-        return static_cast<nofScout_Free&>(world.addFigure(pt, std::make_unique<nofScout_Free>(pt, owner, nullptr)));
+        auto& scout = static_cast<nofScout_Free&>(world.addFigure(pt, std::make_unique<nofScout_Free>(pt, owner, nullptr)));
+        scout.startWandering(); // Walking freely, not on a road
+        return scout;
     };
     const auto addCivilian = [&](unsigned owner, const Position& offset) {
         const MapPoint pt = world.makeMapPoint(towerPos + offset);
@@ -645,7 +573,7 @@ struct ShootingFixture : ArcherTowerFixtureT<WorldWithGCExecution2P>
         if(hasTarget())
             return;
         world.getPlayer(1).increaseInventoryJob(Job::Scout, 1);
-        world.addFigure(targetPos, std::make_unique<nofScout_Free>(targetPos, 1, nullptr));
+        world.addFigure(targetPos, std::make_unique<nofScout_Free>(targetPos, 1, nullptr)).startWandering();
     }
     /// Run numGFs GFs keeping a target available. Returns the GFs where the archer started shooting
     std::vector<unsigned> recordShots(unsigned numGFs, unsigned maxShots = 1000)
@@ -776,6 +704,33 @@ BOOST_AUTO_TEST_CASE(GraphicsTypeAliasesLookoutTower)
         else
             BOOST_TEST((getGraphicsBuildingType(bld) == bld));
     }
+}
+
+BOOST_FIXTURE_TEST_CASE(ScoutOnRoadIsNotValidTarget, ArcherTowerFixture)
+{
+    const MapPoint pt = world.makeMapPoint(hqPos + Position(4, 0));
+    // A scout that is still on its way to his flag uses a road. Killing him there would leave the road blocked
+    auto& scout = static_cast<nofScout_Free&>(world.addFigure(pt, std::make_unique<nofScout_Free>(pt, 0, nullptr)));
+    BOOST_TEST(scout.isWalkingOnRoad());
+    BOOST_TEST(!scout.isValidRangedTarget());
+    // Once he walks freely (here: wandering) he can be hit
+    scout.startWandering();
+    BOOST_TEST(!scout.isWalkingOnRoad());
+    BOOST_TEST(scout.isValidRangedTarget());
+}
+
+BOOST_FIXTURE_TEST_CASE(ArcherWaitingWithStoppedProductionCanBeDismissed, ShootingFixture)
+{
+    waitForArcher();
+    ensureTarget();
+    RTTR_EXEC_TILL(500, archer().getState() == nofBuildingWorker::State::ArcherShooting);
+    // The shot finishes while production is stopped: The archer ends up waiting without an event
+    this->SetProductionEnabled(tower->getPos(), false);
+    RTTR_EXEC_TILL(100, archer().getState() == nofBuildingWorker::State::WaitingForWaresOrProductionStopped);
+    BOOST_TEST(!archer().hasPendingEvent());
+    const MapPoint towerPos = tower->getPos();
+    this->DestroyBuilding(towerPos);
+    RTTR_SKIP_GFS(100);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

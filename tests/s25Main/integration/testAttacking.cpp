@@ -1511,7 +1511,8 @@ struct RangedHitFixture : AttackFixture<>
         addSoldiers(milBld0Pos, 1, Job::General);
         addSoldiers(milBld1Pos, 1, Job::Private);
         this->Attack(milBld1Pos, 1, false);
-        RTTR_EXEC_TILL(200, findFigure<nofAttacker>(world) != nullptr);
+        // He is not a valid target while still passing the door of his building
+        RTTR_EXEC_TILL(200, findFigure<nofAttacker>(world) && findFigure<nofAttacker>(world)->isValidRangedTarget());
         auto* attacker = findFigure<nofAttacker>(world);
         BOOST_TEST_REQUIRE(attacker);
         BOOST_TEST_REQUIRE(attacker->isValidRangedTarget());
@@ -1557,5 +1558,29 @@ BOOST_FIXTURE_TEST_CASE(RangedHitKillsLastHitpoint, RangedHitFixture)
     BOOST_TEST(milBld1->getNumTroops() == 1u);
 }
 
+
+BOOST_FIXTURE_TEST_CASE(SoldierPassingADoorIsNotValidRangedTarget, AttackFixture<>)
+{
+    addSoldiers(milBld0Pos, 1, Job::Private);
+    addSoldiers(milBld0Pos, 1, Job::General);
+    addSoldiers(milBld1Pos, 1, Job::Private);
+    this->Attack(milBld1Pos, 1, false);
+    bool seenInDoor = false;
+    for(unsigned gf = 0; gf < 120; ++gf)
+    {
+        em.executeNextGF();
+        if(auto* attacker = findFigure<nofAttacker>(world))
+        {
+            // Opening a door and closing it again is part of the walk, so he must not die in between
+            const bool inDoor = attacker->isMoving()
+                                && (world.getNO(attacker->getPos())->getType() == NodalObjectType::Building
+                                    || world.getNO(attacker->getDestinationForCurrentMove())->getType()
+                                         == NodalObjectType::Building);
+            BOOST_TEST_REQUIRE(attacker->isValidRangedTarget() != inDoor);
+            seenInDoor |= inDoor;
+        }
+    }
+    BOOST_TEST(seenInDoor);
+}
 
 BOOST_AUTO_TEST_SUITE_END()

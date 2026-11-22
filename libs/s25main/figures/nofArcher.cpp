@@ -97,6 +97,8 @@ void nofArcher::waitFor(const unsigned numGFs)
 
 void nofArcher::handleDerivedEvent(const unsigned /*id*/)
 {
+    // The event is done (and deleted afterwards), so forget it
+    current_ev = nullptr;
     switch(state)
     {
         default: RTTR_Assert(false); break;

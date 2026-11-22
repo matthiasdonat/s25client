@@ -368,7 +368,12 @@ bool nofActiveSoldier::isValidRangedTarget() const
         case SoldierState::WalkingHome:
         case SoldierState::AttackingWalkingToGoal:
         case SoldierState::AttackingWaitingAroundBuilding:
-        case SoldierState::AggressivedefendingWalkingToAggressor: return !enemy;
+        case SoldierState::AggressivedefendingWalkingToAggressor:
+            // Not while passing a door: It is opened at the start of the walk and closed at its end
+            return !enemy
+                   && !(isMoving() && (world->getNO(pos)->getType() == NodalObjectType::Building
+                                       || world->getNO(getDestinationForCurrentMove())->getType()
+                                            == NodalObjectType::Building));
         default: return false;
     }
 }

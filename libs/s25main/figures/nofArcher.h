@@ -54,6 +54,8 @@ public:
 
     void handleDerivedEvent(unsigned id) override;
 
+    /// True if an event of this archer is pending (must not be the case while he waits for wares or production)
+    bool hasPendingEvent() const { return current_ev != nullptr; }
     /// Number of remaining shots with the wine boost
     unsigned getBoostedShotsLeft() const { return boostedShotsLeft_; }
 };

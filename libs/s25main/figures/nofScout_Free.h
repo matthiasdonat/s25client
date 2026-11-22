@@ -44,7 +44,7 @@ public:
     /// Wird aufgerufen, wenn die Flagge abgerissen wurde
     void lostWork() override;
 
-    /// True if a ranged weapon may hit this scout: He is out in the world and not already dead
+    /// True if a ranged weapon may hit this scout: He walks freely (not on a road)
     bool isValidRangedTarget() const;
     /// Kills the scout (hit by a ranged weapon)
     void killByRangedHit();
