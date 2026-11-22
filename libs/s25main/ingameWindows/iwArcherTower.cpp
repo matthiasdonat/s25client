@@ -15,6 +15,7 @@
 namespace {
 /// Control id of the first priority button, the others follow in the order of ArcherTargetPriority
 constexpr unsigned ID_FirstPriorityButton = 20;
+constexpr unsigned ID_ArcherCount = 30;
 
 const char* getPriorityText(const ArcherTargetPriority priority)
 {
@@ -40,6 +41,15 @@ iwArcherTower::iwArcherTower(GameWorldView& gwv, GameCommandFactory& gcFactory, 
                       _(getPriorityText(priority)), SmallFont, _("Preferred target of the archers"));
     }
     updatePriorityButtons();
+    maxArchers_ = MAX_ARCHERS_PER_TOWER;
+    addVarText(ID_ArcherCount, DrawPoint(113, 104), _("Archers: %u/%u"), 0xFFFFFF00, FontStyle::CENTER, NormalFont, 2,
+               &numArchers_, &maxArchers_);
+}
+
+void iwArcherTower::msgPaintBefore()
+{
+    iwBuilding::msgPaintBefore();
+    numArchers_ = tower().getNumPresentArchers();
 }
 
 nobArcherTower& iwArcherTower::tower() const

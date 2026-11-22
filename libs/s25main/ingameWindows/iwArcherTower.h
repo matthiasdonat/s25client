@@ -19,6 +19,10 @@ public:
 
 private:
     nobArcherTower& tower() const;
+    void msgPaintBefore() override;
+    /// Shown as "present/capacity"
+    unsigned numArchers_ = 0;
+    unsigned maxArchers_ = 0;
     /// Highlight the button of the current priority
     void updatePriorityButtons();
     void msgButtonClick(unsigned ctrl_id) override;
