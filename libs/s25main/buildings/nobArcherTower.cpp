@@ -6,10 +6,13 @@
 #include "EventManager.h"
 #include "GamePlayer.h"
 #include "SerializedGameData.h"
+#include "drivers/VideoDriverWrapper.h"
+#include "ogl/IRenderer.h"
 #include "figures/nofArcher.h"
 #include "helpers/containerUtils.h"
 #include "world/GameWorld.h"
 #include <algorithm>
+#include <cstdlib>
 
 nobArcherTower::nobArcherTower(const MapPoint pos, const unsigned char player, const Nation nation)
     : nobUsual(BuildingType::ArcherTower, pos, player, nation), archers_{}
@@ -31,6 +34,34 @@ void nobArcherTower::serialize(SerializedGameData& sgd) const
     for(const nofArcher* archer : archers_)
         sgd.pushObject(archer, true);
     sgd.pushEnum<uint8_t>(targetPriority_);
+}
+
+void nobArcherTower::draw(const DrawPoint drawPt)
+{
+    nobUsual::draw(drawPt);
+    // The platform only exists for the archers, so show it as soon as one of them is up there
+    if(getNumPresentArchers() == 0)
+        return;
+
+    // Isometric diamond around the archers' feet. Rows are drawn from top to bottom, each a bit narrower
+    // towards the tips. Planks are alternately lighter and darker, the outline is darkest.
+    constexpr unsigned plankLight = 0xFF8B5A2B;
+    constexpr unsigned plankDark = 0xFF6F4720;
+    constexpr unsigned outline = 0xFF3E2810;
+    const DrawPoint center = drawPt + DrawPoint(ARCHER_PLATFORM_CENTER[0], ARCHER_PLATFORM_CENTER[1]);
+    IRenderer& renderer = *VIDEODRIVER.getRenderer();
+    for(int dy = -ARCHER_PLATFORM_HALF_HEIGHT; dy <= ARCHER_PLATFORM_HALF_HEIGHT; ++dy)
+    {
+        const int halfWidth =
+          ARCHER_PLATFORM_HALF_WIDTH * (ARCHER_PLATFORM_HALF_HEIGHT - std::abs(dy)) / ARCHER_PLATFORM_HALF_HEIGHT;
+        const bool isEdge = std::abs(dy) == ARCHER_PLATFORM_HALF_HEIGHT;
+        const unsigned color = isEdge ? outline : (dy % 2 == 0 ? plankLight : plankDark);
+        const unsigned width = std::max(2 * halfWidth, 2);
+        renderer.drawRect(Rect(center + DrawPoint(-halfWidth, dy), Extent(width, 1)), color);
+        // Left and right outline of the row
+        renderer.drawRect(Rect(center + DrawPoint(-halfWidth, dy), Extent(1, 1)), outline);
+        renderer.drawRect(Rect(center + DrawPoint(halfWidth - 1, dy), Extent(1, 1)), outline);
+    }
 }
 
 unsigned nobArcherTower::getNumArchers() const

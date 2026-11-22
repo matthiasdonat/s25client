@@ -23,6 +23,9 @@ public:
 
     GO_Type getGOT() const final { return GO_Type::NobArcherTower; }
 
+    /// Draws the tower and the wooden platform the archers stand on
+    void draw(DrawPoint drawPt) override;
+
     /// Number of archers assigned to this tower (including those still walking to it)
     unsigned getNumArchers() const;
     /// Number of archers that arrived at the tower
