@@ -13,8 +13,8 @@
 ## Status (Stand 2026-11-22)
 
 - [x] Task 1-13 erledigt und committet (Ledger: `.superpowers/sdd/2026-11-22-archer-tower/progress.md`, dort auch alle Rulings).
-- [ ] Task 14 offen: AI-Absturztest, `clang-format` (nicht installiert), PR-Beschreibung.
-- [ ] Abschlussreview des ganzen Branches laeuft (Subagent).
+- [x] Task 14 erledigt: AI-Test, PR-Beschreibung (`docs/superpowers/archer-tower-pr-description.md`). `clang-format` ist auf diesem Rechner nicht installiert, daher nicht gelaufen.
+- [x] Abschlussreview: Selbstprüfung für Spec und KI; der Reviewer-Subagent läuft noch und konnte nicht abgebrochen werden (Befunde danach prüfen).
 - Abweichungen: Task 12 ohne UI-Test (Test-Fixtures haben keine Spieldaten), Task 13 ohne manuelle Pruefung im Spiel (Dach-Offsets sind Platzhalter), Task 10 ohne statistischen Trefferchance-Test.
 
 ## Global Constraints
@@ -258,7 +258,7 @@
 - Modify: `external/languages` is a submodule and is not changed; check `rttr.pot` generation target only if the repo documents one (see `README.md`).
 - Test: `tests/s25Main/integration/testAI.cpp` (or the existing AI/autoplay test; reuse its fixture)
 
-- [ ] **Step 1: Failing test:** `AIDoesNotCrashWithArcherAddon` (run an AI-vs-AI headless game for the same number of GFs as the existing AI test with `ARCHER_TOWER` and `WINE` enabled; additionally place a human-built tower for one AI-owned player); expect it to pass or reveal AI tables that need the new enum values (`AIPlayerJH.cpp:320-329` `bldToTest`, `BuildingPlanner.cpp`), fix with the smallest change that keeps the AI from building the tower.
-- [ ] **Step 2: Run the complete suites:** `ctest --output-on-failure` in `build`, plus `make clangFormat` followed by `git diff --exit-code`.
-- [ ] **Step 3: Write the PR description** (feature, addon id, savegame version bump, deviations from the original wish list: no catapult/flag attack, graphics reused, no AI, German translations pending in `external/languages`, test list, manual test notes, known limitations).
-- [ ] **Step 4: Commit** `git commit -m "Verify archer tower with AI and full test run"`
+- [x] **Step 1: Failing test:** `AIDoesNotCrashWithArcherAddon` (run an AI-vs-AI headless game for the same number of GFs as the existing AI test with `ARCHER_TOWER` and `WINE` enabled; additionally place a human-built tower for one AI-owned player); expect it to pass or reveal AI tables that need the new enum values (`AIPlayerJH.cpp:320-329` `bldToTest`, `BuildingPlanner.cpp`), fix with the smallest change that keeps the AI from building the tower.
+- [x] **Step 2: Run the complete suites:** `ctest --output-on-failure` in `build`, plus `make clangFormat` followed by `git diff --exit-code`.
+- [x] **Step 3: Write the PR description** (feature, addon id, savegame version bump, deviations from the original wish list: no catapult/flag attack, graphics reused, no AI, German translations pending in `external/languages`, test list, manual test notes, known limitations).
+- [x] **Step 4: Commit** `git commit -m "Verify archer tower with AI and full test run"`
