@@ -735,4 +735,28 @@ BOOST_FIXTURE_TEST_CASE(ArcherWaitingWithStoppedProductionCanBeDismissed, Shooti
     RTTR_SKIP_GFS(100);
 }
 
+BOOST_FIXTURE_TEST_CASE(ArcherIsOnRoofOnlyAfterArrival, ArcherTowerFixture)
+{
+    addBows(MAX_ARCHERS_PER_TOWER);
+    nobArcherTower* tower = createTower();
+    unsigned maxPresent = 0;
+    for(unsigned gf = 0; gf < 1500 && tower->getNumPresentArchers() < MAX_ARCHERS_PER_TOWER; ++gf)
+    {
+        em.executeNextGF();
+        for(unsigned slot = 0; slot < MAX_ARCHERS_PER_TOWER; ++slot)
+        {
+            const nofArcher* archer = tower->getArcher(slot);
+            if(!archer)
+                continue;
+            // Only archers that arrived are drawn on the roof (state != FigureWork) and they stand on the tower node
+            const bool onRoof = archer->getState() != nofBuildingWorker::State::FigureWork;
+            BOOST_TEST_REQUIRE(onRoof == (archer->getPos() == tower->getPos() && !archer->isMoving()));
+        }
+        // The building window shows "unoccupied" exactly as long as nobody is on the roof
+        BOOST_TEST_REQUIRE(tower->hasWorker() == (tower->getNumPresentArchers() > 0));
+        maxPresent = std::max(maxPresent, tower->getNumPresentArchers());
+    }
+    BOOST_TEST(maxPresent == MAX_ARCHERS_PER_TOWER);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
