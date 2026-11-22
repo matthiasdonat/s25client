@@ -10,7 +10,11 @@
 #include "PlayerInfo.h"
 #include "Savegame.h"
 #include "SerializedGameData.h"
+#include "buildings/nobArcherTower.h"
 #include "buildings/nobBaseWarehouse.h"
+#include "factories/BuildingFactory.h"
+#include "figures/nofArcher.h"
+#include "worldFixtures/WorldWithGCExecution.h"
 #include "buildings/nobUsual.h"
 #include "helpers/serializeEnums.h"
 #include "worldFixtures/MockLocalGameState.h"
@@ -66,7 +70,157 @@ std::unique_ptr<Game> loadV15Fixture(Savegame& save)
 }
 } // namespace
 
+namespace {
+/// World with archer tower addon where the HQ has helpers (but no bows) for recruiting archers
+struct ArcherTowerFixture : WorldWithGCExecution1P
+{
+    ArcherTowerFixture()
+    {
+        ggs.setSelection(AddonId::ARCHER_TOWER, 1);
+        hq = world.getSpecObj<nobBaseWarehouse>(hqPos);
+        hq->addToInventory(PeopleCounts::make(Job::Helper, 10), true);
+    }
+
+    void addBows(unsigned num) { hq->addToInventory(GoodCounts::make(GoodType::Bow, num), true); }
+
+    /// Creates a tower next to the HQ and connects it with a road
+    nobArcherTower* createTower()
+    {
+        const MapPoint towerPos = hqPos + MapPoint(2, 0);
+        auto* tower = static_cast<nobArcherTower*>(
+          BuildingFactory::createBuilding(world, BuildingType::ArcherTower, towerPos, curPlayer, Nation::Romans));
+        BuildRoad(world.getNeighbour(towerPos, Direction::SouthEast), false,
+                  std::vector<Direction>(2, Direction::West));
+        return tower;
+    }
+
+    nobBaseWarehouse* hq;
+};
+} // namespace
+
 BOOST_AUTO_TEST_SUITE(ArcherTowerSuite)
+
+BOOST_FIXTURE_TEST_CASE(TowerRequestsFourArchers, ArcherTowerFixture)
+{
+    addBows(MAX_ARCHERS_PER_TOWER);
+    nobArcherTower* tower = createTower();
+    BOOST_TEST(tower->getNumArchers() == MAX_ARCHERS_PER_TOWER);
+    RTTR_EXEC_TILL(1500, tower->getNumPresentArchers() == MAX_ARCHERS_PER_TOWER);
+    BOOST_TEST(tower->hasWorker());
+    BOOST_TEST(!tower->isDoorOpen());
+    for(unsigned slot = 0; slot < MAX_ARCHERS_PER_TOWER; ++slot)
+    {
+        BOOST_TEST_REQUIRE(tower->getArcher(slot));
+        BOOST_TEST(tower->getSlotOf(*tower->getArcher(slot)) == slot);
+    }
+    BOOST_TEST(hq->getNumRealFigures(Job::Archer) == 0u);
+    BOOST_TEST(hq->getNumRealWares(GoodType::Bow) == 0u);
+}
+
+BOOST_FIXTURE_TEST_CASE(NoArcherWithoutBow, ArcherTowerFixture)
+{
+    nobArcherTower* tower = createTower();
+    RTTR_SKIP_GFS(500);
+    BOOST_TEST(tower->getNumArchers() == 0u);
+    BOOST_TEST(!tower->hasWorker());
+    BOOST_TEST(tower->isDoorOpen());
+    // Archers are still wanted and arrive once bows are available
+    addBows(MAX_ARCHERS_PER_TOWER);
+    RTTR_EXEC_TILL(3000, tower->getNumPresentArchers() == MAX_ARCHERS_PER_TOWER);
+}
+
+BOOST_FIXTURE_TEST_CASE(OnlyMissingSlotIsRequested, ArcherTowerFixture)
+{
+    addBows(MAX_ARCHERS_PER_TOWER);
+    nobArcherTower* tower = createTower();
+    RTTR_EXEC_TILL(1500, tower->getNumPresentArchers() == MAX_ARCHERS_PER_TOWER);
+    tower->getArcher(1)->abrogate();
+    BOOST_TEST(tower->getNumArchers() == MAX_ARCHERS_PER_TOWER - 1);
+    BOOST_TEST(!tower->getArcher(1));
+    BOOST_TEST(tower->hasWorker());
+    BOOST_TEST(!tower->isDoorOpen());
+
+    // Only one replacement is recruited although there are more bows
+    addBows(3);
+    RTTR_EXEC_TILL(3000, tower->getNumArchers() == MAX_ARCHERS_PER_TOWER);
+    RTTR_SKIP_GFS(500);
+    BOOST_TEST(tower->getNumArchers() == MAX_ARCHERS_PER_TOWER);
+    BOOST_TEST(hq->getNumRealWares(GoodType::Bow) == 2u);
+    BOOST_TEST_REQUIRE(tower->getArcher(1));
+    BOOST_TEST(tower->getSlotOf(*tower->getArcher(1)) == 1u);
+}
+
+BOOST_FIXTURE_TEST_CASE(DoorOpensWhenLastArcherIsLost, ArcherTowerFixture)
+{
+    addBows(1);
+    nobArcherTower* tower = createTower();
+    RTTR_EXEC_TILL(1500, tower->getNumPresentArchers() == 1u);
+    BOOST_TEST(!tower->isDoorOpen());
+    tower->getArcher(0)->abrogate();
+    BOOST_TEST(!tower->hasWorker());
+    BOOST_TEST(tower->isDoorOpen());
+    // New archer closes the door again
+    addBows(1);
+    RTTR_EXEC_TILL(1500, tower->getNumPresentArchers() == 1u);
+    BOOST_TEST(!tower->isDoorOpen());
+}
+
+BOOST_FIXTURE_TEST_CASE(DestroyedTowerReleasesArchers, ArcherTowerFixture)
+{
+    addBows(MAX_ARCHERS_PER_TOWER);
+    nobArcherTower* tower = createTower();
+    const MapPoint towerPos = tower->getPos();
+    RTTR_EXEC_TILL(1500, tower->getNumPresentArchers() == MAX_ARCHERS_PER_TOWER);
+    std::vector<const nofArcher*> archers;
+    for(unsigned slot = 0; slot < MAX_ARCHERS_PER_TOWER; ++slot)
+        archers.push_back(tower->getArcher(slot));
+    this->DestroyBuilding(towerPos);
+    for(const nofArcher* archer : archers)
+        BOOST_TEST(archer->isWandering());
+    // Nothing should break while the archers walk home or wander and no new archers are requested
+    addBows(MAX_ARCHERS_PER_TOWER);
+    RTTR_SKIP_GFS(1500);
+    BOOST_TEST(hq->getNumRealWares(GoodType::Bow) == MAX_ARCHERS_PER_TOWER);
+}
+
+BOOST_FIXTURE_TEST_CASE(DestroyedTowerWithArchersOnTheWay, ArcherTowerFixture)
+{
+    nobArcherTower* tower = createTower();
+    const MapPoint towerPos = tower->getPos();
+    this->DestroyBuilding(towerPos);
+    // Pending archer requests must be gone
+    addBows(MAX_ARCHERS_PER_TOWER);
+    RTTR_SKIP_GFS(1000);
+    BOOST_TEST(hq->getNumRealWares(GoodType::Bow) == MAX_ARCHERS_PER_TOWER);
+}
+
+BOOST_FIXTURE_TEST_CASE(SaveLoadKeepsSlots, ArcherTowerFixture)
+{
+    addBows(MAX_ARCHERS_PER_TOWER);
+    nobArcherTower* tower = createTower();
+    RTTR_EXEC_TILL(1500, tower->getNumPresentArchers() == MAX_ARCHERS_PER_TOWER);
+    tower->getArcher(1)->abrogate();
+    tower->getArcher(3)->abrogate();
+
+    SerializedGameData sgd;
+    sgd.makeSnapshot(*game);
+    std::vector<PlayerInfo> players;
+    players.emplace_back(world.getPlayer(0));
+    Game game2(ggs, em.getCurrentGF(), players);
+    MockLocalGameState lgs;
+    sgd.readSnapshot(game2, lgs);
+    game2.world_.initAfterLoad();
+
+    const auto* loaded = game2.world_.getSpecObj<nobArcherTower>(tower->getPos());
+    BOOST_TEST_REQUIRE(loaded);
+    BOOST_TEST(loaded->getNumArchers() == 2u);
+    BOOST_TEST(loaded->getArcher(0));
+    BOOST_TEST(!loaded->getArcher(1));
+    BOOST_TEST(loaded->getArcher(2));
+    BOOST_TEST(!loaded->getArcher(3));
+    BOOST_TEST(loaded->getSlotOf(*loaded->getArcher(2)) == 2u);
+    BOOST_TEST(!loaded->isDoorOpen());
+}
 
 BOOST_AUTO_TEST_CASE(LoadV15Savegame)
 {

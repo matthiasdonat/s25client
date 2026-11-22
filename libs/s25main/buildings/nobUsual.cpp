@@ -302,8 +302,19 @@ void nobUsual::addWare(std::unique_ptr<Ware> ware)
     world->getPlayer(player).removeWare(*ware);
 
     // Arbeiter Bescheid sagen, dass es neue Waren gibt
+    notifyWorkersAboutWareOrProductionAllowed();
+}
+
+void nobUsual::notifyWorkersAboutWareOrProductionAllowed()
+{
     if(worker)
         worker->gotWareOrProductionAllowed();
+}
+
+void nobUsual::notifyWorkersAboutProductionStop()
+{
+    if(worker)
+        worker->productionStopped();
 }
 
 bool nobUsual::freePlaceAtFlag()
@@ -339,7 +350,7 @@ void nobUsual::gotWorker(Job /*job*/, noFigure& worker)
         handleEvent(0);
 }
 
-void nobUsual::workerLost()
+void nobUsual::workerLost(nofBuildingWorker& /*lostWorker*/)
 {
     // Check if worker is or was here (e.g. hunter could currently be outside)
     if(hasWorker())
@@ -490,6 +501,8 @@ bool nobUsual::areThereAnyOrderedWares() const
 
 void nobUsual::workerArrived()
 {
+    // Door is open until the building is occupied
+    closeDoor();
     productivity_ev = getEvMgr().addEvent(this, numProductivityGFs, 1);
 }
 
@@ -507,13 +520,11 @@ void nobUsual::SetProductionEnabled(const bool enabled)
     {
         // Wenn sie deaktiviert wurde, dem Arbeiter Bescheid sagen, damit er entsprechend stoppt, falls er schon
         // auf die Arbeit warteet
-        if(worker)
-            worker->productionStopped();
+        notifyWorkersAboutProductionStop();
     } else
     {
         // Wenn sie wieder aktiviert wurde, evtl wieder mit arbeiten anfangen, falls es einen Arbeiter gibt
-        if(worker)
-            worker->gotWareOrProductionAllowed();
+        notifyWorkersAboutWareOrProductionAllowed();
     }
 }
 

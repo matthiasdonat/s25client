@@ -40,6 +40,7 @@
 #include "gameTypes/JobTypes.h"
 #include "gameTypes/PactTypes.h"
 #include "gameTypes/VisualSettings.h"
+#include "gameData/ArcherTowerConsts.h"
 #include "gameData/BuildingConsts.h"
 #include "gameData/BuildingProperties.h"
 #include "gameData/GoodConsts.h"
@@ -502,7 +503,9 @@ void GamePlayer::addBuilding(noBuilding* bld, BuildingType bldType)
     const auto& description = BLD_WORK_DESC[bldType];
     if(description.job && !isSoldier(*description.job))
     {
-        addJobWanted(*description.job, bld);
+        const unsigned numWorkers = (bldType == BuildingType::ArcherTower) ? MAX_ARCHERS_PER_TOWER : 1u;
+        for(unsigned i = 0; i < numWorkers; ++i)
+            addJobWanted(*description.job, bld);
     }
 
     if(bldType == BuildingType::HarborBuilding)

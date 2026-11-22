@@ -20,6 +20,7 @@
 #include "buildings/nobMilitary.h"
 #include "buildings/nobShipYard.h"
 #include "buildings/nobStorehouse.h"
+#include "buildings/nobArcherTower.h"
 #include "buildings/nobTemple.h"
 #include "figures/nofAggressiveDefender.h"
 #include "figures/nofArmorer.h"
@@ -40,6 +41,7 @@
 #include "figures/nofGeologist.h"
 #include "figures/nofHunter.h"
 #include "figures/nofIronfounder.h"
+#include "figures/nofArcher.h"
 #include "figures/nofLeatherWorker.h"
 #include "figures/nofMetalworker.h"
 #include "figures/nofMiller.h"
@@ -188,6 +190,8 @@ std::unique_ptr<GameObject> SerializedGameData::createGameObject(const GO_Type g
         RTTR_CREATE_GO(GO_Type::NofTempleservant, nofTempleServant);
         RTTR_CREATE_GO(GO_Type::Grapefield, noGrapefield);
         RTTR_CREATE_GO(GO_Type::NobTemple, nobTemple);
+        RTTR_CREATE_GO(GO_Type::NobArcherTower, nobArcherTower);
+        RTTR_CREATE_GO(GO_Type::NofArcher, nofArcher);
         RTTR_CREATE_GO(GO_Type::NofSkinner, nofSkinner);
         RTTR_CREATE_GO(GO_Type::NofTanner, nofTanner);
         RTTR_CREATE_GO(GO_Type::NofLeatherWorker, nofLeatherWorker);

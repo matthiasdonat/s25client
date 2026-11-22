@@ -4,6 +4,7 @@
 
 #include "JobFactory.h"
 #include "buildings/noBuildingSite.h"
+#include "buildings/nobArcherTower.h"
 #include "buildings/nobBaseMilitary.h"
 #include "buildings/nobBaseWarehouse.h"
 #include "buildings/nobUsual.h"
@@ -12,6 +13,7 @@
 //////////////////////////////////////////////////////////////////////////
 // Job includes, maybe use register function in nof* classes?
 //////////////////////////////////////////////////////////////////////////
+#include "figures/nofArcher.h"
 #include "figures/nofArmorer.h"
 #include "figures/nofBaker.h"
 #include "figures/nofBrewer.h"
@@ -124,7 +126,7 @@ std::unique_ptr<noFigure> JobFactory::createJob(const Job jobId, const MapPoint 
         case Job::BoatCarrier:
             throw std::logic_error("Cannot create a boat carrier job (try creating Job::Helper).");
             break;
-        case Job::Archer: break; // Needs a tower as goal, see nobArcherTower
+        case Job::Archer: return std::make_unique<nofArcher>(pt, player, &checkedCast<nobArcherTower>(goal));
     }
     throw std::logic_error("Invalid job type " + helpers::toString(jobId));
 }

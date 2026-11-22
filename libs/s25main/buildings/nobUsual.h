@@ -53,6 +53,11 @@ protected:
 
     void DestroyBuilding() override;
 
+    /// Tell the worker(s) that there are new wares or that production is allowed again
+    virtual void notifyWorkersAboutWareOrProductionAllowed();
+    /// Tell the worker(s) that the production was stopped
+    virtual void notifyWorkersAboutProductionStop();
+
 public:
     /// Wird gerade gearbeitet oder nicht?
     bool is_working;
@@ -66,7 +71,7 @@ public:
 
     void draw(DrawPoint drawPt) override;
 
-    bool hasWorker() const;
+    virtual bool hasWorker() const;
 
     /// Event-Handler
     void handleEvent(unsigned id) override;
@@ -79,9 +84,9 @@ public:
     /// Wird aufgerufen, wenn ein Arbeiter für das Gebäude gefunden werden konnte
     void gotWorker(Job job, noFigure& worker) override;
     /// Wird vom Arbeiter aufgerufen, wenn er im Gebäude angekommen ist
-    void workerArrived();
+    virtual void workerArrived();
     /// Wird vom Arbeiter aufgerufen, wenn er nicht (mehr) zur Arbeit kommen kann
-    void workerLost();
+    virtual void workerLost(nofBuildingWorker& lostWorker);
 
     /// Gibt den Warenbestand (eingehende Waren - Rohstoffe) zurück
     unsigned char getNumWares(unsigned id) const { return numWares[id]; }

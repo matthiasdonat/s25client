@@ -83,8 +83,10 @@ enum class GO_Type : uint16_t
     NofSkinner,
     NofTanner,
     NofLeatherWorker,
+    NobArcherTower,
+    NofArcher,
 };
 constexpr auto maxEnumValue(GO_Type)
 {
-    return GO_Type::NofLeatherWorker;
+    return GO_Type::NofArcher;
 }

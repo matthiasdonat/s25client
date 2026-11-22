@@ -69,7 +69,7 @@ void nofBuildingWorker::abrogateWorkplace()
 {
     if(workplace)
     {
-        workplace->workerLost();
+        workplace->workerLost(*this);
         workplace = nullptr;
     }
 }
@@ -204,9 +204,7 @@ void nofBuildingWorker::gotWareOrProductionAllowed()
 
 void nofBuildingWorker::goalReached()
 {
-    // Tür zumachen (ist immer bis zu Erstbesetzung offen)
-    workplace->closeDoor();
-    // Gebäude Bescheid sagen, dass ich da bin
+    // Gebäude Bescheid sagen, dass ich da bin (macht auch die Tür zu, die bis zur Erstbesetzung offen ist)
     workplace->workerArrived();
 
     workplaceReached();
