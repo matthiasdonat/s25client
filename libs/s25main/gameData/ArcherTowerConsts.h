@@ -28,9 +28,9 @@ constexpr unsigned ARCHER_SHOT_ANIMATION_GFS = 16;
 constexpr unsigned ARCHER_SEARCH_INTERVAL_GFS = 20;
 /// Offsets (from the building position) where the archers of a tower stand on the roof, indexed by slot
 constexpr std::array<std::array<int, 2>, MAX_ARCHERS_PER_TOWER> ARCHER_ROOF_OFFSETS{
-  {{-7, -44}, {7, -44}, {-7, -38}, {7, -38}}};
+  {{-7, -36}, {7, -36}, {-7, -30}, {7, -30}}};
 /// Center of the wooden platform the archers stand on (relative to the building position) and half its size
-constexpr std::array<int, 2> ARCHER_PLATFORM_CENTER{0, -40};
+constexpr std::array<int, 2> ARCHER_PLATFORM_CENTER{0, -32};
 constexpr int ARCHER_PLATFORM_HALF_WIDTH = 15;
 constexpr int ARCHER_PLATFORM_HALF_HEIGHT = 7;
 /// Time between two shots of an archer without wine, in game frames
