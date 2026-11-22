@@ -141,6 +141,7 @@ void GamePlayer::loadStandardDistribution()
     distribution[GoodType::Stones].client_buildings.push_back(BuildingType::Catapult);
     distribution[GoodType::Grapes].client_buildings.push_back(BuildingType::Winery);
     distribution[GoodType::Wine].client_buildings.push_back(BuildingType::Temple);
+    distribution[GoodType::Wine].client_buildings.push_back(BuildingType::ArcherTower);
     distribution[GoodType::Skins].client_buildings.push_back(BuildingType::Tannery);
     distribution[GoodType::Leather].client_buildings.push_back(BuildingType::LeatherWorks);
 
@@ -301,6 +302,10 @@ void GamePlayer::deserialize(SerializedGameData& sgd)
             helpers::popContainer(sgd, dist.goals);
         }
         dist.selected_goal = sgd.popUnsignedInt();
+
+        // Archer towers also use wine, but older savegames don't know them
+        if(sgd.getGameDataVersion() < 16 && i == GoodType::Wine)
+            dist.client_buildings.push_back(BuildingType::ArcherTower);
     }
 
     useCustomBuildOrder_ = sgd.popBool();

@@ -194,6 +194,39 @@ BOOST_FIXTURE_TEST_CASE(DestroyedTowerWithArchersOnTheWay, ArcherTowerFixture)
     BOOST_TEST(hq->getNumRealWares(GoodType::Bow) == MAX_ARCHERS_PER_TOWER);
 }
 
+BOOST_FIXTURE_TEST_CASE(TowerOrdersUpToThreeWine, ArcherTowerFixture)
+{
+    addBows(MAX_ARCHERS_PER_TOWER);
+    hq->addToInventory(GoodCounts::make(GoodType::Wine, 10), true);
+    nobArcherTower* tower = createTower();
+    RTTR_EXEC_TILL(3000, tower->getNumWares(0) == ARCHER_TOWER_WINE_SPACES);
+    RTTR_SKIP_GFS(1000);
+    BOOST_TEST(tower->getNumWares(0) == ARCHER_TOWER_WINE_SPACES);
+    BOOST_TEST(hq->getNumRealWares(GoodType::Wine) == 10u - ARCHER_TOWER_WINE_SPACES);
+}
+
+BOOST_FIXTURE_TEST_CASE(WineGoesToTempleAndTower, ArcherTowerFixture)
+{
+    addBows(MAX_ARCHERS_PER_TOWER);
+    hq->addToInventory(GoodCounts::make(GoodType::Wine, 10), true);
+    hq->addToInventory(PeopleCounts::make(Job::TempleServant, 1), true);
+    nobArcherTower* tower = createTower();
+    const MapPoint templePos = hqPos - MapPoint(2, 0);
+    const auto* temple = static_cast<nobUsual*>(
+      BuildingFactory::createBuilding(world, BuildingType::Temple, templePos, curPlayer, Nation::Romans));
+    BuildRoad(world.getNeighbour(templePos, Direction::SouthEast), false, std::vector<Direction>(2, Direction::East));
+    RTTR_EXEC_TILL(4000, tower->getNumWares(0) == ARCHER_TOWER_WINE_SPACES && temple->getNumWares(0) > 0);
+}
+
+BOOST_AUTO_TEST_CASE(V15SaveStillDeliversWineToTemple)
+{
+    Savegame save;
+    const auto game = loadV15Fixture(save);
+    const auto& wineClients = game->world_.getPlayer(0).getClientBuildings(GoodType::Wine);
+    BOOST_TEST(std::count(wineClients.begin(), wineClients.end(), BuildingType::Temple) == 1);
+    BOOST_TEST(std::count(wineClients.begin(), wineClients.end(), BuildingType::ArcherTower) == 1);
+}
+
 BOOST_FIXTURE_TEST_CASE(SaveLoadKeepsSlots, ArcherTowerFixture)
 {
     addBows(MAX_ARCHERS_PER_TOWER);
