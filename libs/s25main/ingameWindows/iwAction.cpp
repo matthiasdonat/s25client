@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "iwAction.h"
+#include "AddonHelperFunctions.h"
 #include "Cheats.h"
 #include "GameInterface.h"
 #include "GamePlayer.h"
@@ -109,7 +110,8 @@ iwAction::iwAction(GameInterface& gi, GameWorldView& gwv, const Tabs& tabs, MapP
            {BuildingType::Sawmill, BuildingType::Slaughterhouse, BuildingType::Mill, BuildingType::Bakery,
             BuildingType::Ironsmelter, BuildingType::Metalworks, BuildingType::Armory, BuildingType::Mint,
             BuildingType::Shipyard, BuildingType::Brewery, BuildingType::Winery, BuildingType::Tannery,
-            BuildingType::LeatherWorks, BuildingType::Storehouse, BuildingType::Watchtower, BuildingType::Catapult},
+            BuildingType::LeatherWorks, BuildingType::Storehouse, BuildingType::Watchtower, BuildingType::Catapult,
+            BuildingType::ArcherTower},
            {BuildingType::Farm, BuildingType::PigFarm, BuildingType::DonkeyBreeder, BuildingType::Charburner,
             BuildingType::Vineyard, BuildingType::Temple, BuildingType::Fortress, BuildingType::HarborBuilding},
            {BuildingType::GoldMine, BuildingType::IronMine, BuildingType::CoalMine, BuildingType::GraniteMine}}};
@@ -159,6 +161,9 @@ iwAction::iwAction(GameInterface& gi, GameWorldView& gwv, const Tabs& tabs, MapP
             buildingAvailable[BuildingType::Tannery] = false;
             buildingAvailable[BuildingType::LeatherWorks] = false;
         }
+
+        if(!isArcherTowerActive(gwv.getWorld().getGGS()))
+            buildingAvailable[BuildingType::ArcherTower] = false;
 
         const bool showBuildingRadius = gwv.getWorld().getGGS().isEnabled(AddonId::BUILDING_RADIUS);
         constexpr helpers::EnumArray<unsigned, BuildTab> NUM_TABS = {1, 2, 3, 1, 3};

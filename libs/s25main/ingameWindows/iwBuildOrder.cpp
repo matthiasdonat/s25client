@@ -100,6 +100,9 @@ void iwBuildOrder::transmitSettings()
             transmitPendingBuildOrder[i++] = BuildingType::LeatherWorks;
         }
 
+        if(!isArcherTowerActive(gwv.getWorld().getGGS()))
+            transmitPendingBuildOrder[i++] = BuildingType::ArcherTower;
+
         if(GAMECLIENT.ChangeBuildOrder(useCustomBuildOrder, transmitPendingBuildOrder))
         {
             GAMECLIENT.visual_settings.build_order = transmitPendingBuildOrder;

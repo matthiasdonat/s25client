@@ -445,8 +445,9 @@ void GameWorldView::drawProductivity(const noBaseBuilding& no, const DrawPoint& 
             text = _("(stopped)");
         else
         {
-            // Catapult and Lookout tower doesn't have productivity!
-            if(n.getBuildingType() == BuildingType::Catapult || n.getBuildingType() == BuildingType::LookoutTower)
+            // Catapult, lookout tower and archer tower don't have productivity!
+            if(n.getBuildingType() == BuildingType::Catapult || n.getBuildingType() == BuildingType::LookoutTower
+               || n.getBuildingType() == BuildingType::ArcherTower)
                 return;
 
             unsigned short p = n.getProductivity();

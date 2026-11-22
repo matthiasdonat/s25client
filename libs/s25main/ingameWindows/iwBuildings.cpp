@@ -17,6 +17,7 @@
 #include "buildings/nobUsual.h"
 #include "files.h"
 #include "iwBaseWarehouse.h"
+#include "iwArcherTower.h"
 #include "iwBuilding.h"
 #include "iwHarborBuilding.h"
 #include "iwHelp.h"
@@ -49,6 +50,7 @@ void iwBuildings::setBuildingOrder()
       BuildingType::HarborBuilding,                                                       // entry 31
       BuildingType::Vineyard,       BuildingType::Winery,     BuildingType::Temple,       // entry 34
       BuildingType::Skinner,        BuildingType::Tannery,    BuildingType::LeatherWorks, // entry 37
+      BuildingType::ArcherTower,
     };
 
     helpers::eraseIf(bts, makeIsUnusedBuilding(gwv.getWorld().getGGS()));
@@ -151,6 +153,8 @@ void iwBuildings::msgButtonClick(const unsigned ctrl_id)
         goToFirstMatching<iwBaseWarehouse>(bldType, buildingRegister.getStorehouses());
     else if(bldType == BuildingType::Temple)
         goToFirstMatching<iwTempleBuilding>(bldType, buildingRegister.getBuildings(bldType));
+    else if(bldType == BuildingType::ArcherTower)
+        goToFirstMatching<iwArcherTower>(bldType, buildingRegister.getBuildings(bldType));
     else
         goToFirstMatching<iwBuilding>(bldType, buildingRegister.getBuildings(bldType));
 }

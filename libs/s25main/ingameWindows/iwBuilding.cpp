@@ -14,6 +14,7 @@
 #include "helpers/containerUtils.h"
 #include "iwDemolishBuilding.h"
 #include "iwHelp.h"
+#include "iwArcherTower.h"
 #include "iwTempleBuilding.h"
 #include "ogl/FontStyle.h"
 #include "ogl/glArchivItem_Bitmap.h"
@@ -86,7 +87,8 @@ iwBuilding::iwBuilding(GameWorldView& gwv, GameCommandFactory& gcFactory, nobUsu
     Window* productivity =
       addPercent(9, DrawPoint(59, 31), Extent(106, 16), TextureColor::Grey, 0xFFFFFF00, SmallFont, &this->productivity);
     if(building->getBuildingType() == BuildingType::Catapult
-       || building->getBuildingType() == BuildingType::LookoutTower)
+       || building->getBuildingType() == BuildingType::LookoutTower
+       || building->getBuildingType() == BuildingType::ArcherTower)
         productivity->setVisible(false);
 
     addText(10, DrawPoint(113, 50), _("(House unoccupied)"), COLOR_RED, FontStyle::CENTER, NormalFont);
@@ -232,6 +234,8 @@ void iwBuilding::msgButtonClick(const unsigned ctrl_id)
                 if(building->getBuildingType() == BuildingType::Temple)
                     WINDOWMANAGER.replaceWindow(std::make_unique<iwTempleBuilding>(gwv, gcFactory, *it))
                       .setPos(getPos());
+                else if(building->getBuildingType() == BuildingType::ArcherTower)
+                    WINDOWMANAGER.replaceWindow(std::make_unique<iwArcherTower>(gwv, gcFactory, *it)).setPos(getPos());
                 else
                     WINDOWMANAGER.replaceWindow(std::make_unique<iwBuilding>(gwv, gcFactory, *it)).setPos(getPos());
                 break;

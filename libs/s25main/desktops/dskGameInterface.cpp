@@ -18,6 +18,7 @@
 #include "buildings/nobHarborBuilding.h"
 #include "buildings/nobMilitary.h"
 #include "buildings/nobStorehouse.h"
+#include "buildings/nobArcherTower.h"
 #include "buildings/nobTemple.h"
 #include "buildings/nobUsual.h"
 #include "controls/ctrlImageButton.h"
@@ -31,6 +32,7 @@
 #include "ingameWindows/iwAction.h"
 #include "ingameWindows/iwBaseWarehouse.h"
 #include "ingameWindows/iwBuildOrder.h"
+#include "ingameWindows/iwArcherTower.h"
 #include "ingameWindows/iwBuilding.h"
 #include "ingameWindows/iwBuildingProductivities.h"
 #include "ingameWindows/iwBuildingSite.h"
@@ -596,6 +598,9 @@ bool dskGameInterface::contextClick(const MouseCoords& mc)
             else if(bt == BuildingType::Temple)
                 WINDOWMANAGER.show(std::make_unique<iwTempleBuilding>(
                   gwv, GAMECLIENT, worldViewer.getWorldNonConst().getSpecObj<nobTemple>(cSel)));
+            else if(bt == BuildingType::ArcherTower)
+                WINDOWMANAGER.show(std::make_unique<iwArcherTower>(
+                  gwv, GAMECLIENT, worldViewer.getWorldNonConst().getSpecObj<nobArcherTower>(cSel)));
             else
                 WINDOWMANAGER.show(std::make_unique<iwBuilding>(
                   gwv, GAMECLIENT, worldViewer.getWorldNonConst().getSpecObj<nobUsual>(cSel)));
