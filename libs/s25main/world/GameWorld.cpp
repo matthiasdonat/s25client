@@ -37,6 +37,7 @@
 #include "nodeObjs/noStaticObject.h"
 #include "gameData/BuildingConsts.h"
 #include "gameData/BuildingProperties.h"
+#include "gameData/ArcherTowerConsts.h"
 #include "gameData/MilitaryConsts.h"
 #include "gameData/TerrainDesc.h"
 #include <algorithm>
@@ -1062,20 +1063,25 @@ bool GameWorld::isPointCompletelyVisible(const MapPoint& pt, unsigned char playe
         }
     }
 
-    // Sichtbereich von Spähtürmen
-    for(const nobUsual* bld : getPlayer(player).getBuildingRegister().getBuildings(BuildingType::LookoutTower)) //-V807
+    // Sichtbereich von Spähtürmen und Bogenschützentürmen
+    for(const auto& [towerType, visualRange] :
+        {std::pair{BuildingType::LookoutTower, VISUALRANGE_LOOKOUTTOWER},
+         std::pair{BuildingType::ArcherTower, VISUALRANGE_ARCHERTOWER}})
     {
-        // Ist Späturm überhaupt besetzt?
-        if(!bld->hasWorker())
-            continue;
+        for(const nobUsual* bld : getPlayer(player).getBuildingRegister().getBuildings(towerType)) //-V807
+        {
+            // Ist Späturm überhaupt besetzt?
+            if(!bld->hasWorker())
+                continue;
 
-        // Nicht die Ausnahme wählen
-        if(bld == exception)
-            continue;
+            // Nicht die Ausnahme wählen
+            if(bld == exception)
+                continue;
 
-        // Liegt Spähturm innerhalb des Sichtradius?
-        if(calcDistance(pt, bld->getPos()) <= VISUALRANGE_LOOKOUTTOWER)
-            return true;
+            // Liegt Spähturm innerhalb des Sichtradius?
+            if(calcDistance(pt, bld->getPos()) <= visualRange)
+                return true;
+        }
     }
 
     // Check scouts and soldiers

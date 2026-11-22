@@ -70,7 +70,10 @@ void nobArcherTower::workerArrived()
 {
     // The first archer closes the door and starts the productivity calculation
     if(!productivity_ev)
+    {
         nobUsual::workerArrived();
+        world->makeVisibleAroundPoint(pos, VISUALRANGE_ARCHERTOWER, player);
+    }
 }
 
 void nobArcherTower::workerLost(nofBuildingWorker& lostWorker)
@@ -83,8 +86,11 @@ void nobArcherTower::workerLost(nofBuildingWorker& lostWorker)
     {
         // Open the door till we get a new archer
         if(productivity_ev)
+        {
             openDoor();
-        getEvMgr().removeEvent(productivity_ev);
+            getEvMgr().removeEvent(productivity_ev);
+            world->recalcVisibilitiesAroundPoint(pos, VISUALRANGE_ARCHERTOWER, player, this);
+        }
     }
     if(getNumArchers() == 0)
         getEvMgr().removeEvent(orderware_ev);
@@ -94,6 +100,7 @@ void nobArcherTower::workerLost(nofBuildingWorker& lostWorker)
 
 void nobArcherTower::DestroyBuilding()
 {
+    const bool hadVision = productivity_ev != nullptr;
     for(nofArcher*& archer : archers_)
     {
         if(archer)
@@ -105,6 +112,10 @@ void nobArcherTower::DestroyBuilding()
     world->getPlayer(player).jobNotWanted(this, true);
 
     nobUsual::DestroyBuilding();
+
+    // The tower is still registered at this point, so exclude it from the visibility calculation
+    if(hadVision)
+        world->recalcVisibilitiesAroundPoint(pos, VISUALRANGE_ARCHERTOWER, player, this);
 }
 
 void nobArcherTower::notifyWorkersAboutWareOrProductionAllowed()

@@ -34,6 +34,7 @@
 
 // LCOV_EXCL_START
 BOOST_TEST_DONT_PRINT_LOG_VALUE(BuildingType)
+BOOST_TEST_DONT_PRINT_LOG_VALUE(Visibility)
 // LCOV_EXCL_STOP
 
 namespace {
@@ -72,30 +73,38 @@ std::unique_ptr<Game> loadV15Fixture(Savegame& save)
 
 namespace {
 /// World with archer tower addon where the HQ has helpers (but no bows) for recruiting archers
-struct ArcherTowerFixture : WorldWithGCExecution1P
+template<class T_World>
+struct ArcherTowerFixtureT : T_World
 {
-    ArcherTowerFixture()
+    using T_World::BuildRoad;
+    using T_World::curPlayer;
+    using T_World::ggs;
+    using T_World::hqPos;
+    using T_World::world;
+
+    ArcherTowerFixtureT()
     {
         ggs.setSelection(AddonId::ARCHER_TOWER, 1);
-        hq = world.getSpecObj<nobBaseWarehouse>(hqPos);
+        hq = world.template getSpecObj<nobBaseWarehouse>(hqPos);
         hq->addToInventory(PeopleCounts::make(Job::Helper, 10), true);
     }
 
     void addBows(unsigned num) { hq->addToInventory(GoodCounts::make(GoodType::Bow, num), true); }
 
-    /// Creates a tower next to the HQ and connects it with a road
-    nobArcherTower* createTower()
+    /// Creates a tower in the given distance east of the HQ and connects it with a road
+    nobArcherTower* createTower(unsigned distance = 2)
     {
-        const MapPoint towerPos = hqPos + MapPoint(2, 0);
+        const MapPoint towerPos = world.makeMapPoint(hqPos + Position(distance, 0));
         auto* tower = static_cast<nobArcherTower*>(
           BuildingFactory::createBuilding(world, BuildingType::ArcherTower, towerPos, curPlayer, Nation::Romans));
         BuildRoad(world.getNeighbour(towerPos, Direction::SouthEast), false,
-                  std::vector<Direction>(2, Direction::West));
+                  std::vector<Direction>(distance, Direction::West));
         return tower;
     }
 
     nobBaseWarehouse* hq;
 };
+using ArcherTowerFixture = ArcherTowerFixtureT<WorldWithGCExecution1P>;
 } // namespace
 
 BOOST_AUTO_TEST_SUITE(ArcherTowerSuite)
@@ -225,6 +234,72 @@ BOOST_AUTO_TEST_CASE(V15SaveStillDeliversWineToTemple)
     const auto& wineClients = game->world_.getPlayer(0).getClientBuildings(GoodType::Wine);
     BOOST_TEST(std::count(wineClients.begin(), wineClients.end(), BuildingType::Temple) == 1);
     BOOST_TEST(std::count(wineClients.begin(), wineClients.end(), BuildingType::ArcherTower) == 1);
+}
+
+namespace {
+/// Tower far away from the HQ so that some nodes in range of the tower are not visible by other means.
+/// Needs a bigger world than the default for a single player
+struct FarTowerFixture : ArcherTowerFixtureT<WorldWithGCExecution<1, 40, 20>>
+{
+    static constexpr unsigned towerDistance = 6;
+
+    FarTowerFixture() { ggs.exploration = Exploration::FogOfWar; }
+
+    nobArcherTower* createFarTower() { return createTower(towerDistance); }
+
+    /// Node at the maximum vision distance east of the tower
+    MapPoint farPoint(const nobArcherTower& tower) const
+    {
+        return world.makeMapPoint(tower.getPos() + Position(VISUALRANGE_ARCHERTOWER, 0));
+    }
+
+    Visibility visibility(MapPoint pt) const { return world.getNode(pt).fow[curPlayer].visibility; }
+};
+} // namespace
+
+BOOST_FIXTURE_TEST_CASE(TowerRevealsRadiusSevenWithFirstArcher, FarTowerFixture)
+{
+    addBows(1);
+    nobArcherTower* tower = createFarTower();
+    const MapPoint far = farPoint(*tower);
+    BOOST_TEST_REQUIRE(visibility(far) != Visibility::Visible);
+    RTTR_EXEC_TILL(2000, tower->getNumPresentArchers() == 1u);
+    BOOST_TEST(visibility(far) == Visibility::Visible);
+    const MapPoint tooFar = world.makeMapPoint(far + Position(1, 0));
+    BOOST_TEST(visibility(tooFar) != Visibility::Visible);
+}
+
+BOOST_FIXTURE_TEST_CASE(VisionRemovedWhenLastArcherIsLost, FarTowerFixture)
+{
+    addBows(1);
+    nobArcherTower* tower = createFarTower();
+    const MapPoint far = farPoint(*tower);
+    RTTR_EXEC_TILL(2000, tower->getNumPresentArchers() == 1u);
+    BOOST_TEST_REQUIRE(visibility(far) == Visibility::Visible);
+    tower->getArcher(0)->abrogate();
+    BOOST_TEST(visibility(far) != Visibility::Visible);
+}
+
+BOOST_FIXTURE_TEST_CASE(VisionStaysWhenOneOfTwoLost, FarTowerFixture)
+{
+    addBows(2);
+    nobArcherTower* tower = createFarTower();
+    const MapPoint far = farPoint(*tower);
+    RTTR_EXEC_TILL(3000, tower->getNumPresentArchers() == 2u);
+    tower->getArcher(0)->abrogate();
+    BOOST_TEST(visibility(far) == Visibility::Visible);
+}
+
+BOOST_FIXTURE_TEST_CASE(VisionRemovedWhenTowerIsDestroyed, FarTowerFixture)
+{
+    addBows(2);
+    nobArcherTower* tower = createFarTower();
+    const MapPoint far = farPoint(*tower);
+    const MapPoint towerPos = tower->getPos();
+    RTTR_EXEC_TILL(3000, tower->getNumPresentArchers() == 2u);
+    BOOST_TEST_REQUIRE(visibility(far) == Visibility::Visible);
+    this->DestroyBuilding(towerPos);
+    BOOST_TEST(visibility(far) != Visibility::Visible);
 }
 
 BOOST_FIXTURE_TEST_CASE(SaveLoadKeepsSlots, ArcherTowerFixture)
