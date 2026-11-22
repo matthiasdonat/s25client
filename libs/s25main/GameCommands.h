@@ -5,6 +5,7 @@
 #pragma once
 
 #include "GameCommand.h"
+#include "figures/ArcherTargeting.h"
 #include "helpers/serializeContainers.h"
 #include "helpers/serializeEnums.h"
 #include "helpers/serializePoint.h"
@@ -427,6 +428,29 @@ public:
     {
         Coords::serialize(ser);
         ser.pushBool(enabled);
+    }
+    void execute(GameWorld& world, uint8_t playerId) override;
+};
+
+/// Set which targets the archers of an archer tower prefer
+class SetArcherTargetPriority : public Coords
+{
+    GC_FRIEND_DECL;
+    const ArcherTargetPriority priority;
+
+protected:
+    SetArcherTargetPriority(const MapPoint pt, ArcherTargetPriority priority)
+        : Coords(GCType::SetArcherTargetPriority, pt), priority(priority)
+    {}
+    SetArcherTargetPriority(Serializer& ser)
+        : Coords(GCType::SetArcherTargetPriority, ser), priority(helpers::popEnum<ArcherTargetPriority>(ser))
+    {}
+
+public:
+    void serialize(Serializer& ser) const override
+    {
+        Coords::serialize(ser);
+        helpers::pushEnum<uint8_t>(ser, priority);
     }
     void execute(GameWorld& world, uint8_t playerId) override;
 };

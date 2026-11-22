@@ -33,7 +33,14 @@ public:
     unsigned getSlotOf(const nofArcher& archer) const;
     /// Which targets the archers prefer
     ArcherTargetPriority getTargetPriority() const { return targetPriority_; }
-    void setTargetPriority(const ArcherTargetPriority priority) { targetPriority_ = priority; }
+    void setTargetPriority(const ArcherTargetPriority priority)
+    {
+        targetPriority_ = priority;
+        targetPriorityVirtual_ = priority;
+    }
+    /// Value shown in the UI: Changed immediately when the player sends a command, before the command is executed
+    ArcherTargetPriority getTargetPriorityVirtual() const { return targetPriorityVirtual_; }
+    void setTargetPriorityVirtual(const ArcherTargetPriority priority) { targetPriorityVirtual_ = priority; }
     /// True if at least one archer arrived
     bool hasWorker() const override;
 
@@ -54,4 +61,5 @@ private:
 
     std::array<nofArcher*, MAX_ARCHERS_PER_TOWER> archers_;
     ArcherTargetPriority targetPriority_ = ArcherTargetPriority::Nearest;
+    ArcherTargetPriority targetPriorityVirtual_ = ArcherTargetPriority::Nearest;
 };

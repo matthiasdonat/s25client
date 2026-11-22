@@ -7,6 +7,7 @@
 #include "PointOutput.h"
 #include "RttrForeachPt.h"
 #include "addons/const_addons.h"
+#include "buildings/nobArcherTower.h"
 #include "buildings/nobBaseWarehouse.h"
 #include "buildings/nobMilitary.h"
 #include "buildings/nobUsual.h"
@@ -685,6 +686,46 @@ BOOST_FIXTURE_TEST_CASE(ChangeArmorAccept, WorldWithGCExecution2P)
     BOOST_TEST_REQUIRE(bld->isArmorAllowed());
     this->SetProductionEnabled(bldPt, false);
     BOOST_TEST_REQUIRE(bld->isArmorAllowed());
+}
+
+namespace {
+class TestSetArcherTargetPriority : public gc::SetArcherTargetPriority
+{
+public:
+    TestSetArcherTargetPriority(MapPoint pt, ArcherTargetPriority priority) : gc::SetArcherTargetPriority(pt, priority)
+    {}
+};
+} // namespace
+
+BOOST_FIXTURE_TEST_CASE(ChangeArcherTargetPriority, WorldWithGCExecution2P)
+{
+    const MapPoint bldPt = hqPos + MapPoint(3, 0);
+    auto* bld = dynamic_cast<nobArcherTower*>(
+      BuildingFactory::createBuilding(world, BuildingType::ArcherTower, bldPt, curPlayer, Nation::Romans));
+    BOOST_TEST_REQUIRE(bld);
+    BOOST_TEST_REQUIRE((bld->getTargetPriority() == ArcherTargetPriority::Nearest)); //-V522
+
+    this->SetArcherTargetPriority(bldPt, ArcherTargetPriority::Weakest);
+    BOOST_TEST((bld->getTargetPriority() == ArcherTargetPriority::Weakest));
+    BOOST_TEST((bld->getTargetPriorityVirtual() == ArcherTargetPriority::Weakest));
+
+    // Other player cannot change it
+    curPlayer = 1;
+    this->SetArcherTargetPriority(bldPt, ArcherTargetPriority::Strongest);
+    BOOST_TEST((bld->getTargetPriority() == ArcherTargetPriority::Weakest));
+    curPlayer = 0;
+
+    // Not an archer tower -> ignored without crash
+    this->SetArcherTargetPriority(hqPos, ArcherTargetPriority::Strongest);
+    BOOST_TEST((bld->getTargetPriority() == ArcherTargetPriority::Weakest));
+
+    // Serialization round trip
+    gc::Deserializer ser;
+    TestSetArcherTargetPriority(bldPt, ArcherTargetPriority::Strongest).serialize(ser);
+    const auto cmd = gc::GameCommand::deserialize(ser);
+    BOOST_TEST_REQUIRE(cmd);
+    cmd->execute(world, curPlayer);
+    BOOST_TEST((bld->getTargetPriority() == ArcherTargetPriority::Strongest));
 }
 
 BOOST_FIXTURE_TEST_CASE(DisableProduction, WorldWithGCExecution2P)

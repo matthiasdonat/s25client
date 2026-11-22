@@ -10,6 +10,7 @@
 #include "buildings/nobBaseWarehouse.h"
 #include "buildings/nobHarborBuilding.h"
 #include "buildings/nobMilitary.h"
+#include "buildings/nobArcherTower.h"
 #include "buildings/nobShipYard.h"
 #include "buildings/nobTemple.h"
 #include "enum_cast.hpp"
@@ -259,6 +260,13 @@ void SetArmorAllowed::execute(GameWorld& world, uint8_t playerId)
     auto* const bld = world.getSpecObj<nobMilitary>(pt_);
     if(bld && bld->getPlayer() == playerId)
         bld->SetArmorAllowed(enabled);
+}
+
+void SetArcherTargetPriority::execute(GameWorld& world, uint8_t playerId)
+{
+    auto* const bld = world.getSpecObj<nobArcherTower>(pt_);
+    if(bld && bld->getPlayer() == playerId)
+        bld->setTargetPriority(priority);
 }
 
 void SetTroopLimit::execute(GameWorld& world, uint8_t playerId)

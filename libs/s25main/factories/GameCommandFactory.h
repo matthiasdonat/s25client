@@ -5,6 +5,7 @@
 #pragma once
 
 #include "GameCommand.h"
+#include "figures/ArcherTargeting.h"
 #include "variant.h"
 #include "gameTypes/BuildingType.h"
 #include "gameTypes/Direction.h"
@@ -55,6 +56,8 @@ public:
     /// Toggles coin delivery on/off for a military building
     bool SetCoinsAllowed(MapPoint pt, bool enabled);
     bool SetArmorAllowed(MapPoint pt, bool enabled);
+    /// Sets which targets the archers of an archer tower prefer
+    bool SetArcherTargetPriority(MapPoint pt, ArcherTargetPriority priority);
     /// Stops/starts production of a producer
     bool SetProductionEnabled(MapPoint pt, bool enabled);
     bool NotifyAlliesOfLocation(MapPoint pt);

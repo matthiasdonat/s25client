@@ -97,6 +97,11 @@ bool GameCommandFactory::SetArmorAllowed(const MapPoint pt, bool enabled)
     return addGC(new gc::SetArmorAllowed(pt, enabled));
 }
 
+bool GameCommandFactory::SetArcherTargetPriority(const MapPoint pt, const ArcherTargetPriority priority)
+{
+    return addGC(new gc::SetArcherTargetPriority(pt, priority));
+}
+
 bool GameCommandFactory::SetProductionEnabled(const MapPoint pt, bool enabled)
 {
     return addGC(new gc::SetProductionEnabled(pt, enabled));

@@ -41,6 +41,7 @@ GameCommandPtr GameCommand::deserialize(Deserializer& ser)
         case GCType::SeaAttack: gc = new SeaAttack(ser); break;
         case GCType::SetCoinsAllowed: gc = new SetCoinsAllowed(ser); break;
         case GCType::SetArmorAllowed: gc = new SetArmorAllowed(ser); break;
+        case GCType::SetArcherTargetPriority: gc = new SetArcherTargetPriority(ser); break;
         case GCType::SetProductionEnabled: gc = new SetProductionEnabled(ser); break;
         case GCType::SetInventorySetting: gc = new SetInventorySetting(ser); break;
         case GCType::SetAllInventorySettings: gc = new SetAllInventorySettings(ser); break;

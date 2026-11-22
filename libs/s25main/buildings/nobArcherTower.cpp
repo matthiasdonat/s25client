@@ -20,6 +20,7 @@ nobArcherTower::nobArcherTower(SerializedGameData& sgd, const unsigned obj_id) :
     for(nofArcher*& archer : archers_)
         archer = sgd.popObject<nofArcher>(GO_Type::NofArcher);
     targetPriority_ = sgd.pop<ArcherTargetPriority>();
+    targetPriorityVirtual_ = targetPriority_;
 }
 
 nobArcherTower::~nobArcherTower() = default;
