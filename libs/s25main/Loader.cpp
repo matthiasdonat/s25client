@@ -33,6 +33,7 @@
 #include "resources/ResolvedFile.h"
 #include "gameTypes/Direction.h"
 #include "gameTypes/DirectionToImgDir.h"
+#include "gameData/BuildingConsts.h"
 #include "gameData/JobConsts.h"
 #include "gameData/MilitaryConsts.h"
 #include "gameData/NationConsts.h"
@@ -154,7 +155,7 @@ glArchivItem_Bitmap* Loader::getNationIcon(Nation nation, BuildingType bld)
     if(bld == BuildingType::Charburner)
         return LOADER.getImageN("charburner", rttr::enumCast(nation) * 8 + 8);
     else
-        return convertChecked<glArchivItem_Bitmap*>(nationIcons_[nation]->get(rttr::enumCast(bld)));
+        return convertChecked<glArchivItem_Bitmap*>(nationIcons_[nation]->get(rttr::enumCast(getGraphicsBuildingType(bld))));
 }
 
 ITexture* Loader::getBuildingTex(Nation nation, BuildingType bld)
@@ -164,7 +165,7 @@ ITexture* Loader::getBuildingTex(Nation nation, BuildingType bld)
         unsigned id = rttr::enumCast(nation) * 8;
         return getImageN("charburner", id + (isWinterGFX_ ? 6 : 1));
     } else
-        return checkedCast<ITexture*>(getNationImage(nation, 250 + rttr::enumCast(bld) * 5));
+        return checkedCast<ITexture*>(getNationImage(nation, 250 + rttr::enumCast(getGraphicsBuildingType(bld)) * 5));
     return nullptr;
 }
 
@@ -644,6 +645,7 @@ void Loader::fillCaches()
             sprites.skeleton.reset();
             sprites.door.reset();
 
+            const BuildingType graphicsType = getGraphicsBuildingType(type);
             if(type == BuildingType::Charburner)
             {
                 unsigned id = rttr::enumCast(nation) * 8;
@@ -657,19 +659,19 @@ void Loader::fillCaches()
                 sprites.door.add(getImageN("charburner", id + (isWinterGFX_ ? 7 : 5)));
             } else
             {
-                sprites.building.add(getNationImage(nation, 250 + 5 * rttr::enumCast(type)));
-                sprites.building.addShadow(getNationImage(nation, 250 + 5 * rttr::enumCast(type) + 1));
-                if(type == BuildingType::Headquarters)
+                sprites.building.add(getNationImage(nation, 250 + 5 * rttr::enumCast(graphicsType)));
+                sprites.building.addShadow(getNationImage(nation, 250 + 5 * rttr::enumCast(graphicsType) + 1));
+                if(graphicsType == BuildingType::Headquarters)
                 {
                     // HQ has no skeleton, but we have a tent that can act as an HQ
                     sprites.skeleton.add(getImageN("mis0bobs", 6));
                     sprites.skeleton.addShadow(getImageN("mis0bobs", 7));
                 } else
                 {
-                    sprites.skeleton.add(getNationImage(nation, 250 + 5 * rttr::enumCast(type) + 2));
-                    sprites.skeleton.addShadow(getNationImage(nation, 250 + 5 * rttr::enumCast(type) + 3));
+                    sprites.skeleton.add(getNationImage(nation, 250 + 5 * rttr::enumCast(graphicsType) + 2));
+                    sprites.skeleton.addShadow(getNationImage(nation, 250 + 5 * rttr::enumCast(graphicsType) + 3));
                 }
-                sprites.door.add(getNationImage(nation, 250 + 5 * rttr::enumCast(type) + 4));
+                sprites.door.add(getNationImage(nation, 250 + 5 * rttr::enumCast(graphicsType) + 4));
             }
 
             stp->add(sprites.building);

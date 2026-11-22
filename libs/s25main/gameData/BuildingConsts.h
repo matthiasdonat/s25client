@@ -14,6 +14,13 @@
 
 extern const helpers::EnumArray<const char*, BuildingType> BUILDING_NAMES;
 
+/// Building type whose sprites (building, shadow, skeleton, door, icon) are used to draw the given building.
+/// Identity except for the archer tower which looks like the lookout tower
+constexpr BuildingType getGraphicsBuildingType(const BuildingType bld)
+{
+    return bld == BuildingType::ArcherTower ? BuildingType::LookoutTower : bld;
+}
+
 constexpr helpers::EnumArray<BuildingCost, BuildingType> BUILDING_COSTS = {
   {{0, 0}, {2, 0}, {2, 3}, {2, 0}, {3, 5}, {4, 4}, {2, 3}, {4, 7}, {2, 2}, {4, 7}, {4, 0}, {4, 0}, {4, 0}, {4, 0},
    {4, 0}, {2, 2}, {4, 2}, {2, 0}, {2, 0}, {2, 0}, {2, 0}, {2, 2}, {2, 0}, {2, 2}, {2, 2}, {2, 2}, {2, 2}, {4, 3},

@@ -19,6 +19,7 @@
 #include "figures/nofScout_Free.h"
 #include "worldFixtures/WorldWithGCExecution.h"
 #include "buildings/nobUsual.h"
+#include "helpers/EnumRange.h"
 #include "helpers/Range.h"
 #include "helpers/serializeEnums.h"
 #include "worldFixtures/MockLocalGameState.h"
@@ -764,6 +765,17 @@ BOOST_FIXTURE_TEST_CASE(SaveLoadMidBoostKeepsCounter, ShootingFixture)
     BOOST_TEST_REQUIRE(loaded->getArcher(0));
     BOOST_TEST(loaded->getArcher(0)->getBoostedShotsLeft() == 6u);
     BOOST_TEST((loaded->getArcher(0)->getState() == oldState), "state changed");
+}
+
+BOOST_AUTO_TEST_CASE(GraphicsTypeAliasesLookoutTower)
+{
+    for(const auto bld : helpers::enumRange<BuildingType>())
+    {
+        if(bld == BuildingType::ArcherTower)
+            BOOST_TEST((getGraphicsBuildingType(bld) == BuildingType::LookoutTower));
+        else
+            BOOST_TEST((getGraphicsBuildingType(bld) == bld));
+    }
 }
 
 BOOST_AUTO_TEST_SUITE_END()
