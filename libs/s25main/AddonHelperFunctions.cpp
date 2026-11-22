@@ -8,6 +8,11 @@
 #include <WineLoader.h>
 #include <addons/Addon.h>
 
+bool isArcherTowerActive(const GlobalGameSettings& ggs)
+{
+    return ggs.isEnabled(AddonId::ARCHER_TOWER) && ggs.isEnabled(AddonId::WINE);
+}
+
 std::function<bool(const BuildingType type)> makeIsUnusedBuilding(const GlobalGameSettings& ggs)
 {
     const bool wineAddonActive = ggs.isEnabled(AddonId::WINE);

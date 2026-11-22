@@ -49,6 +49,8 @@ public:
     bool isEnabled(AddonId id) const;
     unsigned getSelection(AddonId id) const;
     void setSelection(AddonId id, unsigned selection);
+    /// Enables the addons required by other enabled addons (the archer tower needs the wine economy)
+    void enforceAddonDependencies();
     /// Apply the removed global INEXHAUSTIBLE_MINES addon: make every mine type that is still at its default behavior
     /// inexhaustible. Used to migrate old settings, savegames and Lua scripts.
     void applyLegacyInexhaustibleMines();

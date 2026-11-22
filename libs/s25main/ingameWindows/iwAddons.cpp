@@ -116,6 +116,7 @@ void iwAddons::msgButtonClick(const unsigned ctrl_id)
             {
                 for(const auto& gui : addonGuis_)
                     ggs.setSelection(gui->getAddon().getId(), gui->getStatus());
+                ggs.enforceAddonDependencies();
 
                 switch(policy_)
                 {

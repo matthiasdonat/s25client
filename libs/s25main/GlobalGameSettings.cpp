@@ -122,7 +122,8 @@ void GlobalGameSettings::registerAllAddons()
         AddonForesterReachRadius,
         AddonWoodcutterReachRadius,
         AddonStonemasonReachRadius,
-        AddonBuildingRadius
+        AddonBuildingRadius,
+        AddonArcherTower
     >;
     // clang-format on
     using namespace boost::mp11;
@@ -232,6 +233,7 @@ void GlobalGameSettings::loadSettings()
     }
     if(migrateLegacyInexhaustibleMines)
         applyLegacyInexhaustibleMines();
+    enforceAddonDependencies();
 }
 
 /**
@@ -301,6 +303,7 @@ void GlobalGameSettings::deserialize(Serializer& ser)
     }
     if(migrateLegacyInexhaustibleMines)
         applyLegacyInexhaustibleMines();
+    enforceAddonDependencies();
 }
 
 /// Only mine types with an explicitly configured non-default behavior keep their setting. This is required because
@@ -323,6 +326,14 @@ void GlobalGameSettings::setSelection(AddonId id, unsigned selection)
         LOG.write(_("Addon %1$#x not found!\n"), LogTarget::FileAndStderr) % rttr::enumCast(id);
     else
         addon->status = selection;
+    if(id == AddonId::ARCHER_TOWER)
+        enforceAddonDependencies();
+}
+
+void GlobalGameSettings::enforceAddonDependencies()
+{
+    if(isEnabled(AddonId::ARCHER_TOWER) && !isEnabled(AddonId::WINE))
+        setSelection(AddonId::WINE, 1);
 }
 
 unsigned GlobalGameSettings::getMaxMilitaryRank() const

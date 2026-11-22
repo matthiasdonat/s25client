@@ -11,6 +11,9 @@
 
 class GlobalGameSettings;
 
+/// True if the archer tower addon and the wine economy it depends on are both enabled
+bool isArcherTowerActive(const GlobalGameSettings& ggs);
+
 std::function<bool(const BuildingType type)> makeIsUnusedBuilding(const GlobalGameSettings& ggs);
 std::function<bool(const GoodType type)> makeIsUnusedWare(const GlobalGameSettings& ggs);
 std::function<bool(const Job job)> makeIsUnusedJob(const GlobalGameSettings& ggs);
