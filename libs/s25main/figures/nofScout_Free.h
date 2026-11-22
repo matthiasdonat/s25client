@@ -44,6 +44,11 @@ public:
     /// Wird aufgerufen, wenn die Flagge abgerissen wurde
     void lostWork() override;
 
+    /// True if a ranged weapon may hit this scout: He is out in the world and not already dead
+    bool isValidRangedTarget() const;
+    /// Kills the scout (hit by a ranged weapon)
+    void killByRangedHit();
+
     ///// Ist der Erkunder am erkunden (Sichtbereich um ihn herum)?
     // bool IsScouting() const { return (state == ScoutScouting || state == GoToFlag); }
 };

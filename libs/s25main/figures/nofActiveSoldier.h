@@ -119,6 +119,12 @@ public:
     virtual void homeDestroyedAtBegin() = 0;
     /// Takes a hit from another soldier. Reduces hitpoints by one
     void takeHit();
+    /// True if a ranged weapon (e.g. of an archer tower) may hit this soldier:
+    /// He is out in the world (not in a building) and not currently fighting
+    bool isValidRangedTarget() const;
+    /// Takes a hit from a ranged weapon outside of a fight. Reduces armor or hitpoints by one and kills the soldier when
+    /// no hitpoints are left. The soldier may be destroyed afterwards
+    void takeRangedHit();
     /// When a fight was won
     virtual void wonFighting() = 0;
     /// When a fight was lost

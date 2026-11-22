@@ -874,6 +874,9 @@ void noFigure::drawArmor(DrawPoint drawPt)
 
 void noFigure::die()
 {
+    // A moving figure has a pending walk event that must not fire on a dead figure
+    if(current_ev)
+        getEvMgr().removeEvent(current_ev);
     // Weg mit mir
     getEvMgr().addToKillList(world->removeFigure(pos, *this));
     // ggf. Leiche hinlegen, falls da nix ist

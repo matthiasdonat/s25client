@@ -359,6 +359,33 @@ void nofActiveSoldier::takeHit()
     }
 }
 
+bool nofActiveSoldier::isValidRangedTarget() const
+{
+    // Only soldiers out in the open that are not (about to be) tied to a fight or to a defender/attacker of a building
+    // flag, as killing those would require to untangle their counterparts
+    switch(state)
+    {
+        case SoldierState::WalkingHome:
+        case SoldierState::AttackingWalkingToGoal:
+        case SoldierState::AttackingWaitingAroundBuilding:
+        case SoldierState::AggressivedefendingWalkingToAggressor: return !enemy;
+        default: return false;
+    }
+}
+
+void nofActiveSoldier::takeRangedHit()
+{
+    RTTR_Assert(isValidRangedTarget());
+    takeHit();
+    if(hitpoints > 0u)
+        return;
+
+    // Same cleanup as after a lost fight: Inform home building and all dependents
+    lostFighting();
+    // Remove from map, place skeleton and remove from inventory like after a lost fight
+    die();
+}
+
 bool nofActiveSoldier::isReadyForFight() const
 {
     switch(state)

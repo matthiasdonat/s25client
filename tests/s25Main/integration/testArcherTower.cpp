@@ -14,8 +14,10 @@
 #include "buildings/nobBaseWarehouse.h"
 #include "factories/BuildingFactory.h"
 #include "figures/nofArcher.h"
+#include "figures/nofScout_Free.h"
 #include "worldFixtures/WorldWithGCExecution.h"
 #include "buildings/nobUsual.h"
+#include "helpers/Range.h"
 #include "helpers/serializeEnums.h"
 #include "worldFixtures/MockLocalGameState.h"
 #include "gameTypes/VisualSettings.h"
@@ -488,6 +490,50 @@ BOOST_AUTO_TEST_CASE(ArcherTowerUnusedWithoutAddon)
     ggs.setSelection(AddonId::ARCHER_TOWER, 1);
     BOOST_TEST(!makeIsUnusedBuilding(ggs)(BuildingType::ArcherTower));
     BOOST_TEST(!makeIsUnusedJob(ggs)(Job::Archer));
+}
+
+namespace {
+std::vector<MapPoint> allPoints(const GameWorldBase& world)
+{
+    std::vector<MapPoint> pts;
+    for(const auto y : helpers::range(world.getHeight()))
+    {
+        for(const auto x : helpers::range(world.getWidth()))
+            pts.emplace_back(x, y);
+    }
+    return pts;
+}
+} // namespace
+
+BOOST_FIXTURE_TEST_CASE(ScoutDiesOnRangedHit, ArcherTowerFixture)
+{
+    hq->addToInventory(PeopleCounts::make(Job::Scout, 1), true);
+    const MapPoint flagPos = world.getNeighbour(hqPos, Direction::SouthEast);
+    const MapPoint scoutFlagPos = world.makeMapPoint(flagPos + Position(3, 0));
+    this->SetFlag(scoutFlagPos);
+    BuildRoad(scoutFlagPos, false, std::vector<Direction>(3, Direction::West));
+    this->CallSpecialist(scoutFlagPos, Job::Scout);
+    nofScout_Free* scout = nullptr;
+    const auto findScout = [&]() {
+        scout = nullptr;
+        for(const MapPoint pt : allPoints(world))
+        {
+            for(noBase& obj : world.getFigures(pt))
+            {
+                if(auto* s = dynamic_cast<nofScout_Free*>(&obj))
+                    scout = s;
+            }
+        }
+        return scout && scout->isValidRangedTarget();
+    };
+    RTTR_EXEC_TILL(2000, findScout());
+    const MapPoint scoutPos = scout->getPos();
+    const unsigned numScouts = world.getPlayer(0).getInventory().people[Job::Scout];
+    scout->killByRangedHit();
+    BOOST_TEST(world.getPlayer(0).getInventory().people[Job::Scout] == numScouts - 1u);
+    BOOST_TEST(!findScout());
+    BOOST_TEST(world.getFigures(scoutPos).empty());
+    RTTR_SKIP_GFS(500);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

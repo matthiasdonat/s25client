@@ -81,6 +81,19 @@ void nofScout_Free::lostWork()
     }
 }
 
+bool nofScout_Free::isValidRangedTarget() const
+{
+    // Free scouts are always out in the world
+    return true;
+}
+
+void nofScout_Free::killByRangedHit()
+{
+    // Leave the flag so it doesn't wait for or refer to a dead scout
+    abrogate();
+    die();
+}
+
 /// Erkundet (quasi ein Umherirren)
 void nofScout_Free::scout()
 {

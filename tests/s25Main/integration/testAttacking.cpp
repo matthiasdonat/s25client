@@ -1473,4 +1473,89 @@ BOOST_FIXTURE_TEST_CASE(AgressiveDefender_Returns_When_Attacker_Aborts, FreeFigh
     RTTR_EXEC_TILL(100, attackerBld.getNumTroops() == 6u);
 }
 
+namespace {
+/// All points of the map
+std::vector<MapPoint> allPoints(const GameWorldBase& world)
+{
+    std::vector<MapPoint> pts;
+    for(const auto y : helpers::range(world.getHeight()))
+    {
+        for(const auto x : helpers::range(world.getWidth()))
+            pts.emplace_back(x, y);
+    }
+    return pts;
+}
+
+/// Find the first figure of the given type anywhere on the map
+template<class T>
+T* findFigure(GameWorldBase& world)
+{
+    for(const MapPoint pt : allPoints(world))
+    {
+        for(noBase& obj : world.getFigures(pt))
+        {
+            if(auto* figure = dynamic_cast<T*>(&obj))
+                return figure;
+        }
+    }
+    return nullptr;
+}
+
+/// Starts an attack of 1 soldier and returns the attacker as soon as he walks towards his goal
+struct RangedHitFixture : AttackFixture<>
+{
+    nofAttacker* startAttackAndGetAttacker(Job soldierType, unsigned numArmored = 0)
+    {
+        // One soldier always stays in the building
+        addSoldiers(milBld0Pos, 1, soldierType, numArmored);
+        addSoldiers(milBld0Pos, 1, Job::General);
+        addSoldiers(milBld1Pos, 1, Job::Private);
+        this->Attack(milBld1Pos, 1, false);
+        RTTR_EXEC_TILL(200, findFigure<nofAttacker>(world) != nullptr);
+        auto* attacker = findFigure<nofAttacker>(world);
+        BOOST_TEST_REQUIRE(attacker);
+        BOOST_TEST_REQUIRE(attacker->isValidRangedTarget());
+        return attacker;
+    }
+};
+} // namespace
+
+BOOST_FIXTURE_TEST_CASE(RangedHitRemovesArmorFirst, RangedHitFixture)
+{
+    nofAttacker* attacker = startAttackAndGetAttacker(Job::Private, 1);
+    const Inventory& inv = world.getPlayer(0).getInventory();
+    const unsigned armoredBefore = inv[jobEnumToAmoredSoldierEnum(Job::Private)];
+    BOOST_TEST_REQUIRE(attacker->hasArmor());
+    attacker->takeRangedHit();
+    BOOST_TEST(!attacker->hasArmor());
+    BOOST_TEST(attacker->getHitpoints() == HITPOINTS[0]);
+    BOOST_TEST(inv[jobEnumToAmoredSoldierEnum(Job::Private)] == armoredBefore - 1);
+}
+
+BOOST_FIXTURE_TEST_CASE(RangedHitReducesOneHitpoint, RangedHitFixture)
+{
+    nofAttacker* attacker = startAttackAndGetAttacker(Job::Private);
+    attacker->takeRangedHit();
+    BOOST_TEST(attacker->getHitpoints() == HITPOINTS[0] - 1u);
+    BOOST_TEST(findFigure<nofAttacker>(world) == attacker);
+}
+
+BOOST_FIXTURE_TEST_CASE(RangedHitKillsLastHitpoint, RangedHitFixture)
+{
+    nofAttacker* attacker = startAttackAndGetAttacker(Job::Private);
+    const MapPoint attackerPos = attacker->getPos();
+    const unsigned numPrivates = world.getPlayer(0).getInventory().people[Job::Private];
+    for(unsigned i = 0; i < HITPOINTS[0]; ++i)
+        attacker->takeRangedHit();
+    // Gone at once and in the kill list
+    BOOST_TEST(findFigure<nofAttacker>(world) == nullptr);
+    BOOST_TEST(world.getPlayer(0).getInventory().people[Job::Private] == numPrivates - 1u);
+    BOOST_TEST(world.getFigures(attackerPos).empty());
+    // Attacked building must not hold a dangling attacker, own building must be able to continue
+    RTTR_SKIP_GFS(300);
+    BOOST_TEST(milBld0->getNumTroops() == 1u);
+    BOOST_TEST(milBld1->getNumTroops() == 1u);
+}
+
+
 BOOST_AUTO_TEST_SUITE_END()
