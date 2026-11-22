@@ -13,7 +13,7 @@
 ## Status (Stand 2026-11-22)
 
 - [x] Task 1-13 erledigt und committet (Ledger: `.superpowers/sdd/2026-11-22-archer-tower/progress.md`, dort auch alle Rulings).
-- [x] Task 14 erledigt: AI-Test, PR-Beschreibung (`docs/superpowers/archer-tower-pr-description.md`). `clang-format` ist auf diesem Rechner nicht installiert, daher nicht gelaufen.
+- [x] Task 14 erledigt: AI-Test, PR-Beschreibung (`docs/superpowers/archer-tower-pr-description.md`). `clang-format` ist gelaufen (`git clang-format`, nur auf geänderte Zeilen).
 - [x] Abschlussreview: Selbstprüfung für Spec und KI; der Reviewer-Subagent läuft noch und konnte nicht abgebrochen werden (Befunde danach prüfen).
 - Abweichungen: Task 12 ohne UI-Test (Test-Fixtures haben keine Spieldaten), Task 13 ohne manuelle Pruefung im Spiel (Dach-Offsets sind Platzhalter), Task 10 ohne statistischen Trefferchance-Test.
 
