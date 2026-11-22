@@ -10,28 +10,28 @@
 #include "PlayerInfo.h"
 #include "Savegame.h"
 #include "SerializedGameData.h"
+#include "addons/const_addons.h"
 #include "buildings/nobArcherTower.h"
 #include "buildings/nobBaseWarehouse.h"
+#include "buildings/nobUsual.h"
 #include "factories/BuildingFactory.h"
 #include "figures/ArcherTargeting.h"
 #include "figures/nofArcher.h"
 #include "figures/nofPassiveWorker.h"
 #include "figures/nofScout_Free.h"
-#include "worldFixtures/WorldWithGCExecution.h"
-#include "buildings/nobUsual.h"
 #include "helpers/EnumRange.h"
 #include "helpers/Range.h"
 #include "helpers/serializeEnums.h"
 #include "worldFixtures/MockLocalGameState.h"
-#include "gameTypes/VisualSettings.h"
+#include "worldFixtures/WorldWithGCExecution.h"
 #include "world/GameWorld.h"
-#include "addons/const_addons.h"
+#include "gameTypes/BuildingType.h"
+#include "gameTypes/JobTypes.h"
+#include "gameTypes/VisualSettings.h"
 #include "gameData/ArcherTowerConsts.h"
 #include "gameData/BuildingConsts.h"
 #include "gameData/BuildingProperties.h"
 #include "gameData/JobConsts.h"
-#include "gameTypes/BuildingType.h"
-#include "gameTypes/JobTypes.h"
 #include "test/testConfig.h"
 #include <s25util/Serializer.h>
 #include <boost/test/unit_test.hpp>
@@ -511,7 +511,8 @@ BOOST_FIXTURE_TEST_CASE(ScoutDiesOnRangedHit, ArcherTowerFixture)
 {
     const MapPoint scoutPos = world.makeMapPoint(hqPos + Position(4, 0));
     world.getPlayer(0).increaseInventoryJob(Job::Scout, 1);
-    auto& scout = static_cast<nofScout_Free&>(world.addFigure(scoutPos, std::make_unique<nofScout_Free>(scoutPos, 0, nullptr)));
+    auto& scout =
+      static_cast<nofScout_Free&>(world.addFigure(scoutPos, std::make_unique<nofScout_Free>(scoutPos, 0, nullptr)));
     scout.startWandering();
     BOOST_TEST_REQUIRE(scout.isValidRangedTarget());
     const unsigned numScouts = world.getPlayer(0).getInventory().people[Job::Scout];
@@ -527,7 +528,8 @@ BOOST_FIXTURE_TEST_CASE(FindsOnlyVisibleEnemyScoutsInRange, ArcherTowerFixtureT<
     world.makeVisibleAroundPoint(towerPos, ARCHER_TOWER_RANGE + 2, 0);
     const auto addScout = [&](unsigned owner, const Position& offset) -> nofScout_Free& {
         const MapPoint pt = world.makeMapPoint(towerPos + offset);
-        auto& scout = static_cast<nofScout_Free&>(world.addFigure(pt, std::make_unique<nofScout_Free>(pt, owner, nullptr)));
+        auto& scout =
+          static_cast<nofScout_Free&>(world.addFigure(pt, std::make_unique<nofScout_Free>(pt, owner, nullptr)));
         scout.startWandering(); // Walking freely, not on a road
         return scout;
     };
@@ -536,8 +538,8 @@ BOOST_FIXTURE_TEST_CASE(FindsOnlyVisibleEnemyScoutsInRange, ArcherTowerFixtureT<
         world.addFigure(pt, std::make_unique<nofPassiveWorker>(Job::Helper, pt, owner, nullptr));
     };
     auto& enemyScout = addScout(1, Position(3, 0));
-    addScout(0, Position(1, 0));                    // own
-    addCivilian(1, Position(0, 2));                 // civilian
+    addScout(0, Position(1, 0));                      // own
+    addCivilian(1, Position(0, 2));                   // civilian
     addScout(1, Position(ARCHER_TOWER_RANGE + 1, 0)); // out of range
     // Fogged enemy scout
     const auto& fogged = addScout(1, Position(-2, 0));

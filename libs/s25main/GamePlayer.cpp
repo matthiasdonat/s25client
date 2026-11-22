@@ -371,8 +371,7 @@ void GamePlayer::deserialize(SerializedGameData& sgd)
         std::copy(global_inventory_good_raw.begin(), global_inventory_good_raw.end(), global_inventory.goods.begin());
 
         auto countOfNotAvailableJobsInSaveGame =
-          (sgd.getGameDataVersion() < 11 ? numWineAndLeatherAddonJobs : numLeatherAddonJobs)
-          + numArcherTowerAddonJobs;
+          (sgd.getGameDataVersion() < 11 ? numWineAndLeatherAddonJobs : numLeatherAddonJobs) + numArcherTowerAddonJobs;
         std::vector<unsigned int> global_inventory_people_raw(global_inventory.people.size()
                                                               - countOfNotAvailableJobsInSaveGame);
         helpers::popContainer(sgd, global_inventory_people_raw, true);

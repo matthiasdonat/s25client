@@ -94,26 +94,15 @@ iwWares::iwWares(unsigned id, const DrawPoint& pos, unsigned additionalYSpace, c
       GoodType::Skins,   GoodType::Leather,  GoodType::Armor,
     };
 
-    std::vector<Job> JOB_DISPLAY_ORDER{Job::Helper,        Job::Builder,
-                                       Job::Planer,        Job::Woodcutter,
-                                       Job::Forester,      Job::Stonemason,
-                                       Job::Fisher,        Job::Hunter,
-                                       Job::Carpenter,     Job::Farmer,
-                                       Job::PigBreeder,    Job::DonkeyBreeder,
-                                       Job::Miller,        Job::Baker,
-                                       Job::Butcher,       Job::Brewer,
-                                       Job::Miner,         Job::IronFounder,
-                                       Job::Armorer,       Job::Minter,
-                                       Job::Metalworker,   Job::Shipwright,
-                                       Job::Geologist,     Job::Scout,
-                                       Job::PackDonkey,    Job::CharBurner,
-                                       Job::Winegrower,    Job::Vintner,
-                                       Job::TempleServant, Job::Skinner,
-                                       Job::Tanner,        Job::LeatherWorker,
-                                       Job::Archer,
-                                       Job::Private,       Job::PrivateFirstClass,
-                                       Job::Sergeant,      Job::Officer,
-                                       Job::General};
+    std::vector<Job> JOB_DISPLAY_ORDER{
+      Job::Helper,      Job::Builder,       Job::Planer,      Job::Woodcutter,    Job::Forester,
+      Job::Stonemason,  Job::Fisher,        Job::Hunter,      Job::Carpenter,     Job::Farmer,
+      Job::PigBreeder,  Job::DonkeyBreeder, Job::Miller,      Job::Baker,         Job::Butcher,
+      Job::Brewer,      Job::Miner,         Job::IronFounder, Job::Armorer,       Job::Minter,
+      Job::Metalworker, Job::Shipwright,    Job::Geologist,   Job::Scout,         Job::PackDonkey,
+      Job::CharBurner,  Job::Winegrower,    Job::Vintner,     Job::TempleServant, Job::Skinner,
+      Job::Tanner,      Job::LeatherWorker, Job::Archer,      Job::Private,       Job::PrivateFirstClass,
+      Job::Sergeant,    Job::Officer,       Job::General};
 
     helpers::eraseIf(WARE_DISPLAY_ORDER, makeIsUnusedWare(player.getGameWorld().getGGS()));
     helpers::eraseIf(JOB_DISPLAY_ORDER, makeIsUnusedJob(player.getGameWorld().getGGS()));

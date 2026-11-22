@@ -194,7 +194,10 @@ public:
     /// Gibt Inventory-Settings zurück
     const Inventory& getInventory() const { return global_inventory; }
     /// Buildings that currently receive the given ware (for wares with a fixed set of clients)
-    const std::vector<BuildingType>& getClientBuildings(GoodType ware) const { return distribution[ware].client_buildings; }
+    const std::vector<BuildingType>& getClientBuildings(GoodType ware) const
+    {
+        return distribution[ware].client_buildings;
+    }
 
     /// Setzt neue Militäreinstellungen
     void changeMilitarySettings(const MilitarySettings& military_settings);

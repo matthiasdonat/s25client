@@ -4,9 +4,9 @@
 
 #include "PointOutput.h"
 #include "RttrForeachPt.h"
+#include "addons/const_addons.h"
 #include "ai/AIPlayer.h"
 #include "ai/aijh/AIPlayerJH.h"
-#include "addons/const_addons.h"
 #include "buildings/noBuilding.h"
 #include "buildings/noBuildingSite.h"
 #include "buildings/nobBaseWarehouse.h"

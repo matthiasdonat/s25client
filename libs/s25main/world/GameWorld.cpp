@@ -35,9 +35,9 @@
 #include "nodeObjs/noFlag.h"
 #include "nodeObjs/noShip.h"
 #include "nodeObjs/noStaticObject.h"
+#include "gameData/ArcherTowerConsts.h"
 #include "gameData/BuildingConsts.h"
 #include "gameData/BuildingProperties.h"
-#include "gameData/ArcherTowerConsts.h"
 #include "gameData/MilitaryConsts.h"
 #include "gameData/TerrainDesc.h"
 #include <algorithm>
@@ -1064,9 +1064,8 @@ bool GameWorld::isPointCompletelyVisible(const MapPoint& pt, unsigned char playe
     }
 
     // Sichtbereich von Spähtürmen und Bogenschützentürmen
-    for(const auto& [towerType, visualRange] :
-        {std::pair{BuildingType::LookoutTower, VISUALRANGE_LOOKOUTTOWER},
-         std::pair{BuildingType::ArcherTower, VISUALRANGE_ARCHERTOWER}})
+    for(const auto& [towerType, visualRange] : {std::pair{BuildingType::LookoutTower, VISUALRANGE_LOOKOUTTOWER},
+                                                std::pair{BuildingType::ArcherTower, VISUALRANGE_ARCHERTOWER}})
     {
         for(const nobUsual* bld : getPlayer(player).getBuildingRegister().getBuildings(towerType)) //-V807
         {

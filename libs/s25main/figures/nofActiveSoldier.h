@@ -122,8 +122,8 @@ public:
     /// True if a ranged weapon (e.g. of an archer tower) may hit this soldier:
     /// He is out in the world (not in a building) and not currently fighting
     bool isValidRangedTarget() const;
-    /// Takes a hit from a ranged weapon outside of a fight. Reduces armor or hitpoints by one and kills the soldier when
-    /// no hitpoints are left. The soldier may be destroyed afterwards
+    /// Takes a hit from a ranged weapon outside of a fight. Reduces armor or hitpoints by one and kills the soldier
+    /// when no hitpoints are left. The soldier may be destroyed afterwards
     void takeRangedHit();
     /// When a fight was won
     virtual void wonFighting() = 0;

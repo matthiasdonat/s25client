@@ -35,9 +35,9 @@ iwArcherTower::iwArcherTower(GameWorldView& gwv, GameCommandFactory& gcFactory, 
     constexpr Extent btSize(62, 22);
     for(const auto priority : helpers::enumRange<ArcherTargetPriority>())
     {
-        addTextButton(ID_FirstPriorityButton + rttr::enumCast(priority), DrawPoint(10 + 68 * rttr::enumCast(priority), 120),
-                      btSize, TextureColor::Grey, _(getPriorityText(priority)), SmallFont,
-                      _("Preferred target of the archers"));
+        addTextButton(ID_FirstPriorityButton + rttr::enumCast(priority),
+                      DrawPoint(10 + 68 * rttr::enumCast(priority), 120), btSize, TextureColor::Grey,
+                      _(getPriorityText(priority)), SmallFont, _("Preferred target of the archers"));
     }
     updatePriorityButtons();
 }
@@ -58,7 +58,8 @@ void iwArcherTower::updatePriorityButtons()
 
 void iwArcherTower::msgButtonClick(const unsigned ctrl_id)
 {
-    if(ctrl_id >= ID_FirstPriorityButton && ctrl_id < ID_FirstPriorityButton + helpers::NumEnumValues_v<ArcherTargetPriority>)
+    if(ctrl_id >= ID_FirstPriorityButton
+       && ctrl_id < ID_FirstPriorityButton + helpers::NumEnumValues_v<ArcherTargetPriority>)
     {
         const auto priority = static_cast<ArcherTargetPriority>(ctrl_id - ID_FirstPriorityButton);
         if(gcFactory.SetArcherTargetPriority(building->getPos(), priority))

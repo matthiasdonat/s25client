@@ -7,10 +7,10 @@
 #include "GamePlayer.h"
 #include "LeatherLoader.h"
 #include "WineLoader.h"
+#include "buildings/nobArcherTower.h"
 #include "buildings/nobBaseWarehouse.h"
 #include "buildings/nobHarborBuilding.h"
 #include "buildings/nobMilitary.h"
-#include "buildings/nobArcherTower.h"
 #include "buildings/nobShipYard.h"
 #include "buildings/nobTemple.h"
 #include "enum_cast.hpp"
@@ -152,9 +152,9 @@ ChangeBuildOrder::ChangeBuildOrder(Deserializer& ser)
     {
         // The archer tower is the last building type and not stored in older versions
         const auto countOfNotAvailableBuildingsInSaveGame =
-          ser.getDataVersion() >= 2 ? 0u :
-                                      (ser.getDataVersion() < 1 ? numWineAndLeatherAddonBuildings :
-                                                                  numLeatherAddonBuildings);
+          ser.getDataVersion() >= 2 ?
+            0u :
+            (ser.getDataVersion() < 1 ? numWineAndLeatherAddonBuildings : numLeatherAddonBuildings);
         std::vector<BuildingType> buildOrder(data.size() - numArcherTowerAddonBuildings
                                              - countOfNotAvailableBuildingsInSaveGame);
 

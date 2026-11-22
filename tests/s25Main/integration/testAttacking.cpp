@@ -1558,7 +1558,6 @@ BOOST_FIXTURE_TEST_CASE(RangedHitKillsLastHitpoint, RangedHitFixture)
     BOOST_TEST(milBld1->getNumTroops() == 1u);
 }
 
-
 BOOST_FIXTURE_TEST_CASE(SoldierPassingADoorIsNotValidRangedTarget, AttackFixture<>)
 {
     addSoldiers(milBld0Pos, 1, Job::Private);
@@ -1572,10 +1571,10 @@ BOOST_FIXTURE_TEST_CASE(SoldierPassingADoorIsNotValidRangedTarget, AttackFixture
         if(auto* attacker = findFigure<nofAttacker>(world))
         {
             // Opening a door and closing it again is part of the walk, so he must not die in between
-            const bool inDoor = attacker->isMoving()
-                                && (world.getNO(attacker->getPos())->getType() == NodalObjectType::Building
-                                    || world.getNO(attacker->getDestinationForCurrentMove())->getType()
-                                         == NodalObjectType::Building);
+            const bool inDoor =
+              attacker->isMoving()
+              && (world.getNO(attacker->getPos())->getType() == NodalObjectType::Building
+                  || world.getNO(attacker->getDestinationForCurrentMove())->getType() == NodalObjectType::Building);
             BOOST_TEST_REQUIRE(attacker->isValidRangedTarget() != inDoor);
             seenInDoor |= inDoor;
         }

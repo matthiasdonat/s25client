@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include "nobUsual.h"
 #include "figures/ArcherTargeting.h"
+#include "nobUsual.h"
 #include "gameData/ArcherTowerConsts.h"
 #include <array>
 
