@@ -5,6 +5,7 @@
 #pragma once
 
 #include "gameData/GameConsts.h"
+#include <array>
 #include <chrono>
 
 /// Maximum distance (in fields) to a target the archers of a tower shoot at
@@ -21,6 +22,13 @@ constexpr unsigned ARCHER_BOOST_SHOTS = 10;
 constexpr unsigned ARCHER_HIT_CHANCE_PERCENT = 70;
 /// Damage (in hitpoints) of a hit
 constexpr unsigned ARCHER_HIT_DAMAGE = 1;
+/// Duration of the shooting animation in game frames
+constexpr unsigned ARCHER_SHOT_ANIMATION_GFS = 16;
+/// Time between two searches for a target while there is none, in game frames
+constexpr unsigned ARCHER_SEARCH_INTERVAL_GFS = 20;
+/// Offsets (from the building position) where the archers of a tower stand on the roof, indexed by slot
+constexpr std::array<std::array<int, 2>, MAX_ARCHERS_PER_TOWER> ARCHER_ROOF_OFFSETS{
+  {{-14, -26}, {-2, -26}, {-14, -18}, {-2, -18}}};
 /// Time between two shots of an archer without wine, in game frames
 constexpr unsigned ARCHER_SHOT_INTERVAL_GFS = durationToGfs(std::chrono::seconds(7));
 /// Time between two shots of an archer while the wine boost lasts, in game frames

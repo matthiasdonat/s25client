@@ -89,7 +89,8 @@ void nofBuildingWorker::draw(DrawPoint drawPt)
         case State::HunterWaitingForAnimalReady:
         case State::SkinnerSkinningCarcass:
         case State::CatapultTargetBuilding:
-        case State::CatapultBackoff: drawWorking(drawPt); break;
+        case State::CatapultBackoff:
+        case State::ArcherShooting: drawWorking(drawPt); break;
         case State::CarryoutWare: drawWalkingWithWare(drawPt); break;
         case State::WalkingHome:
         case State::EnterBuilding:
@@ -246,6 +247,7 @@ void nofBuildingWorker::lostWork()
         case State::SkinnerSkinningCarcass:
         case State::CatapultTargetBuilding:
         case State::CatapultBackoff:
+        case State::ArcherShooting:
         {
             // Bisheriges Event abmelden, da die Arbeit unterbrochen wird
             getEvMgr().removeEvent(current_ev);

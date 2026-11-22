@@ -39,8 +39,9 @@ public:
                                      /// be shot
         SkinnerWalkingToCarcass,     /// Skinner: walk to carcass
         SkinnerSkinningCarcass,      /// Skinner: get skin from carcass
+        ArcherShooting,              /// Archer: shoots at a target (waiting for the next shot is Waiting1)
     };
-    friend constexpr auto maxEnumValue(State) { return State::SkinnerSkinningCarcass; }
+    friend constexpr auto maxEnumValue(State) { return State::ArcherShooting; }
 
 protected:
     State state;

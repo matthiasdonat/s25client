@@ -5,6 +5,7 @@
 #pragma once
 
 #include "nobUsual.h"
+#include "figures/ArcherTargeting.h"
 #include "gameData/ArcherTowerConsts.h"
 #include <array>
 
@@ -30,6 +31,9 @@ public:
     nofArcher* getArcher(unsigned slot) const { return archers_[slot]; }
     /// Slot of the given archer. The archer must belong to this tower
     unsigned getSlotOf(const nofArcher& archer) const;
+    /// Which targets the archers prefer
+    ArcherTargetPriority getTargetPriority() const { return targetPriority_; }
+    void setTargetPriority(const ArcherTargetPriority priority) { targetPriority_ = priority; }
     /// True if at least one archer arrived
     bool hasWorker() const override;
 
@@ -49,4 +53,5 @@ private:
     nobArcherTower(SerializedGameData& sgd, unsigned obj_id);
 
     std::array<nofArcher*, MAX_ARCHERS_PER_TOWER> archers_;
+    ArcherTargetPriority targetPriority_ = ArcherTargetPriority::Nearest;
 };

@@ -111,6 +111,16 @@ struct ArcherTowerFixtureT : T_World
 using ArcherTowerFixture = ArcherTowerFixtureT<WorldWithGCExecution1P>;
 } // namespace
 
+namespace {
+/// Drive the archer out of the tower: He stops working and the tower asks for a replacement
+void dismissArcher(nobArcherTower& tower, unsigned slot)
+{
+    nofArcher* archer = tower.getArcher(slot);
+    archer->lostWork();
+    tower.workerLost(*archer);
+}
+} // namespace
+
 BOOST_AUTO_TEST_SUITE(ArcherTowerSuite)
 
 BOOST_FIXTURE_TEST_CASE(TowerRequestsFourArchers, ArcherTowerFixture)
@@ -147,7 +157,7 @@ BOOST_FIXTURE_TEST_CASE(OnlyMissingSlotIsRequested, ArcherTowerFixture)
     addBows(MAX_ARCHERS_PER_TOWER);
     nobArcherTower* tower = createTower();
     RTTR_EXEC_TILL(1500, tower->getNumPresentArchers() == MAX_ARCHERS_PER_TOWER);
-    tower->getArcher(1)->abrogate();
+    dismissArcher(*tower, 1);
     BOOST_TEST(tower->getNumArchers() == MAX_ARCHERS_PER_TOWER - 1);
     BOOST_TEST(!tower->getArcher(1));
     BOOST_TEST(tower->hasWorker());
@@ -169,7 +179,7 @@ BOOST_FIXTURE_TEST_CASE(DoorOpensWhenLastArcherIsLost, ArcherTowerFixture)
     nobArcherTower* tower = createTower();
     RTTR_EXEC_TILL(1500, tower->getNumPresentArchers() == 1u);
     BOOST_TEST(!tower->isDoorOpen());
-    tower->getArcher(0)->abrogate();
+    dismissArcher(*tower, 0);
     BOOST_TEST(!tower->hasWorker());
     BOOST_TEST(tower->isDoorOpen());
     // New archer closes the door again
@@ -280,7 +290,7 @@ BOOST_FIXTURE_TEST_CASE(VisionRemovedWhenLastArcherIsLost, FarTowerFixture)
     const MapPoint far = farPoint(*tower);
     RTTR_EXEC_TILL(2000, tower->getNumPresentArchers() == 1u);
     BOOST_TEST_REQUIRE(visibility(far) == Visibility::Visible);
-    tower->getArcher(0)->abrogate();
+    dismissArcher(*tower, 0);
     BOOST_TEST(visibility(far) != Visibility::Visible);
 }
 
@@ -290,7 +300,7 @@ BOOST_FIXTURE_TEST_CASE(VisionStaysWhenOneOfTwoLost, FarTowerFixture)
     nobArcherTower* tower = createFarTower();
     const MapPoint far = farPoint(*tower);
     RTTR_EXEC_TILL(3000, tower->getNumPresentArchers() == 2u);
-    tower->getArcher(0)->abrogate();
+    dismissArcher(*tower, 0);
     BOOST_TEST(visibility(far) == Visibility::Visible);
 }
 
@@ -311,8 +321,10 @@ BOOST_FIXTURE_TEST_CASE(SaveLoadKeepsSlots, ArcherTowerFixture)
     addBows(MAX_ARCHERS_PER_TOWER);
     nobArcherTower* tower = createTower();
     RTTR_EXEC_TILL(1500, tower->getNumPresentArchers() == MAX_ARCHERS_PER_TOWER);
-    tower->getArcher(1)->abrogate();
-    tower->getArcher(3)->abrogate();
+    dismissArcher(*tower, 1);
+    dismissArcher(*tower, 3);
+    // Let the dismissed archers leave (the door is open while they do)
+    RTTR_SKIP_GFS(60);
 
     SerializedGameData sgd;
     sgd.makeSnapshot(*game);
@@ -607,6 +619,151 @@ BOOST_FIXTURE_TEST_CASE(FindsOnlyVisibleEnemyScoutsInRange, ArcherTowerFixtureT<
     BOOST_TEST(targets[0].figure == &enemyScout);
     BOOST_TEST(targets[0].isScout);
     BOOST_TEST(targets[0].distance == 3u);
+}
+
+namespace {
+/// Tower with one archer and an enemy that is always standing in range
+struct ShootingFixture : ArcherTowerFixtureT<WorldWithGCExecution2P>
+{
+    nobArcherTower* tower = nullptr;
+    MapPoint targetPos;
+
+    ShootingFixture()
+    {
+        addBows(1);
+        tower = createTower();
+        targetPos = world.makeMapPoint(tower->getPos() + Position(3, 0));
+    }
+
+    void waitForArcher() { RTTR_EXEC_TILL(1500, tower->getNumPresentArchers() == 1u); }
+    const nofArcher& archer() const { return *tower->getArcher(0); }
+    bool hasTarget() const { return !world.getFigures(targetPos).empty(); }
+    /// Places an enemy scout in range if there is none
+    void ensureTarget()
+    {
+        if(hasTarget())
+            return;
+        world.getPlayer(1).increaseInventoryJob(Job::Scout, 1);
+        world.addFigure(targetPos, std::make_unique<nofScout_Free>(targetPos, 1, nullptr));
+    }
+    /// Run numGFs GFs keeping a target available. Returns the GFs where the archer started shooting
+    std::vector<unsigned> recordShots(unsigned numGFs, unsigned maxShots = 1000)
+    {
+        std::vector<unsigned> shots;
+        bool wasShooting = false;
+        for(unsigned i = 0; i < numGFs && shots.size() < maxShots; ++i)
+        {
+            ensureTarget();
+            em.executeNextGF();
+            const bool isShooting = archer().getState() == nofBuildingWorker::State::ArcherShooting;
+            if(isShooting && !wasShooting)
+                shots.push_back(em.getCurrentGF());
+            wasShooting = isShooting;
+        }
+        return shots;
+    }
+};
+std::vector<unsigned> gaps(const std::vector<unsigned>& shots)
+{
+    std::vector<unsigned> result;
+    for(unsigned i = 1; i < shots.size(); ++i)
+        result.push_back(shots[i] - shots[i - 1]);
+    return result;
+}
+} // namespace
+
+BOOST_FIXTURE_TEST_CASE(ShootsEverySevenSecondsWithoutWine, ShootingFixture)
+{
+    waitForArcher();
+    const auto shots = recordShots(2000, 4);
+    BOOST_TEST_REQUIRE(shots.size() == 4u);
+    for(const unsigned gap : gaps(shots))
+        BOOST_TEST(gap == ARCHER_SHOT_INTERVAL_GFS);
+}
+
+BOOST_FIXTURE_TEST_CASE(WineGivesTenFastShotsThenSlowAgain, ShootingFixture)
+{
+    hq->addToInventory(GoodCounts::make(GoodType::Wine, 1), true);
+    waitForArcher();
+    RTTR_EXEC_TILL(2000, tower->getNumWares(0) == 1u);
+    const auto shots = recordShots(5000, ARCHER_BOOST_SHOTS + 2);
+    BOOST_TEST_REQUIRE(shots.size() == ARCHER_BOOST_SHOTS + 2);
+    BOOST_TEST(tower->getNumWares(0) == 0u);
+    const auto shotGaps = gaps(shots);
+    // The gap after each of the 10 boosted shots is short, afterwards the archer is slow again (no wine left)
+    for(unsigned i = 0; i < ARCHER_BOOST_SHOTS; ++i)
+        BOOST_TEST(shotGaps[i] == ARCHER_BOOSTED_SHOT_INTERVAL_GFS);
+    BOOST_TEST(shotGaps[ARCHER_BOOST_SHOTS] == ARCHER_SHOT_INTERVAL_GFS);
+}
+
+BOOST_FIXTURE_TEST_CASE(ShotsHitAndKillScouts, ShootingFixture)
+{
+    waitForArcher();
+    ensureTarget();
+    // With a hit chance of 70% the scout must die long before 30 shots
+    RTTR_EXEC_TILL(30 * ARCHER_SHOT_INTERVAL_GFS, !hasTarget());
+}
+
+BOOST_FIXTURE_TEST_CASE(ProductionStopPreventsFiring, ShootingFixture)
+{
+    waitForArcher();
+    this->SetProductionEnabled(tower->getPos(), false);
+    BOOST_TEST(recordShots(500).empty());
+    BOOST_TEST((archer().getState() == nofBuildingWorker::State::WaitingForWaresOrProductionStopped), "not waiting");
+    this->SetProductionEnabled(tower->getPos(), true);
+    BOOST_TEST(!recordShots(ARCHER_SEARCH_INTERVAL_GFS + 1, 1).empty());
+}
+
+BOOST_FIXTURE_TEST_CASE(NoWineConsumedWithoutTarget, ShootingFixture)
+{
+    hq->addToInventory(GoodCounts::make(GoodType::Wine, 2), true);
+    waitForArcher();
+    RTTR_EXEC_TILL(2000, tower->getNumWares(0) == 2u);
+    RTTR_SKIP_GFS(500);
+    BOOST_TEST(tower->getNumWares(0) == 2u);
+    BOOST_TEST(archer().getBoostedShotsLeft() == 0u);
+}
+
+BOOST_FIXTURE_TEST_CASE(TowerDestroyedMidShotIsClean, ShootingFixture)
+{
+    waitForArcher();
+    const MapPoint towerPos = tower->getPos();
+    ensureTarget();
+    RTTR_EXEC_TILL(500, archer().getState() == nofBuildingWorker::State::ArcherShooting);
+    this->DestroyBuilding(towerPos);
+    RTTR_SKIP_GFS(500);
+    // No hit was applied after the tower was gone
+    BOOST_TEST(hasTarget());
+}
+
+BOOST_FIXTURE_TEST_CASE(SaveLoadMidBoostKeepsCounter, ShootingFixture)
+{
+    hq->addToInventory(GoodCounts::make(GoodType::Wine, 1), true);
+    waitForArcher();
+    RTTR_EXEC_TILL(2000, tower->getNumWares(0) == 1u);
+    for(unsigned i = 0; i < 3000 && archer().getBoostedShotsLeft() != 6u; ++i)
+    {
+        ensureTarget();
+        em.executeNextGF();
+    }
+    BOOST_TEST_REQUIRE(archer().getBoostedShotsLeft() == 6u);
+    const auto oldState = archer().getState();
+
+    SerializedGameData sgd;
+    sgd.makeSnapshot(*game);
+    std::vector<PlayerInfo> players;
+    players.emplace_back(world.getPlayer(0));
+    players.emplace_back(world.getPlayer(1));
+    Game game2(ggs, em.getCurrentGF(), players);
+    MockLocalGameState lgs;
+    sgd.readSnapshot(game2, lgs);
+    game2.world_.initAfterLoad();
+
+    const auto* loaded = game2.world_.getSpecObj<nobArcherTower>(tower->getPos());
+    BOOST_TEST_REQUIRE(loaded);
+    BOOST_TEST_REQUIRE(loaded->getArcher(0));
+    BOOST_TEST(loaded->getArcher(0)->getBoostedShotsLeft() == 6u);
+    BOOST_TEST((loaded->getArcher(0)->getState() == oldState), "state changed");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

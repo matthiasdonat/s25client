@@ -19,6 +19,7 @@ nobArcherTower::nobArcherTower(SerializedGameData& sgd, const unsigned obj_id) :
 {
     for(nofArcher*& archer : archers_)
         archer = sgd.popObject<nofArcher>(GO_Type::NofArcher);
+    targetPriority_ = sgd.pop<ArcherTargetPriority>();
 }
 
 nobArcherTower::~nobArcherTower() = default;
@@ -28,6 +29,7 @@ void nobArcherTower::serialize(SerializedGameData& sgd) const
     nobUsual::serialize(sgd);
     for(const nofArcher* archer : archers_)
         sgd.pushObject(archer, true);
+    sgd.pushEnum<uint8_t>(targetPriority_);
 }
 
 unsigned nobArcherTower::getNumArchers() const
