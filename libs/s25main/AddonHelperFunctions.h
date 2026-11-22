@@ -31,4 +31,8 @@ constexpr auto numLeatherAddonJobs = 3u;
 constexpr auto numWineAddonJobs = 3u;
 constexpr auto numWineAndLeatherAddonJobs = numWineAddonJobs + numLeatherAddonJobs;
 
+// Archer tower: new last building type and job, only used for deserialization of data before game data version 16
+constexpr auto numArcherTowerAddonBuildings = 1u;
+constexpr auto numArcherTowerAddonJobs = 1u;
+
 constexpr uint8_t transportPrioOfLeatherworks = 7;

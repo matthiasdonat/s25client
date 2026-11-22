@@ -275,7 +275,14 @@ void GamePlayer::deserialize(SerializedGameData& sgd)
             continue;
 
         Distribution& dist = distribution[i];
-        helpers::popContainer(sgd, dist.percent_buildings);
+        if(sgd.getGameDataVersion() < 16)
+        {
+            std::vector<uint8_t> percent_raw(dist.percent_buildings.size() - numArcherTowerAddonBuildings);
+            helpers::popContainer(sgd, percent_raw, true);
+            std::copy(percent_raw.begin(), percent_raw.end(), dist.percent_buildings.begin());
+            dist.percent_buildings[BuildingType::ArcherTower] = 0;
+        } else
+            helpers::popContainer(sgd, dist.percent_buildings);
         // Set standard value otherwise its zero and Slaughterhouse never gets ham
         // because the ham distribution was not there in earlier versions
         if(sgd.getGameDataVersion() < 12 && i == GoodType::Ham)
@@ -300,7 +307,8 @@ void GamePlayer::deserialize(SerializedGameData& sgd)
     if(sgd.getGameDataVersion() < 12)
     {
         auto countOfNotAvailableBuildingsInSaveGame =
-          sgd.getGameDataVersion() < 11 ? numWineAndLeatherAddonBuildings : numLeatherAddonBuildings;
+          (sgd.getGameDataVersion() < 11 ? numWineAndLeatherAddonBuildings : numLeatherAddonBuildings)
+          + numArcherTowerAddonBuildings;
         std::vector<BuildingType> build_order_raw(build_order.size() - countOfNotAvailableBuildingsInSaveGame);
         helpers::popContainer(sgd, build_order_raw, true);
 
@@ -316,6 +324,7 @@ void GamePlayer::deserialize(SerializedGameData& sgd)
                                    {BuildingType::Skinner, BuildingType::Tannery, BuildingType::LeatherWorks});
         }
 
+        build_order_raw.push_back(BuildingType::ArcherTower);
         std::copy(build_order_raw.begin(), build_order_raw.end(), build_order.begin());
 
         auto countOfNotAvailableGoodsInSaveGame =
@@ -328,7 +337,14 @@ void GamePlayer::deserialize(SerializedGameData& sgd)
                        [](uint8_t& prio) { return prio < transportPrioOfLeatherworks ? prio : prio + 1; });
     } else
     {
-        helpers::popContainer(sgd, build_order);
+        if(sgd.getGameDataVersion() < 16)
+        {
+            std::vector<BuildingType> build_order_raw(build_order.size() - numArcherTowerAddonBuildings);
+            helpers::popContainer(sgd, build_order_raw, true);
+            build_order_raw.push_back(BuildingType::ArcherTower);
+            std::copy(build_order_raw.begin(), build_order_raw.end(), build_order.begin());
+        } else
+            helpers::popContainer(sgd, build_order);
         helpers::popContainer(sgd, transportPrio);
     }
 
@@ -349,18 +365,29 @@ void GamePlayer::deserialize(SerializedGameData& sgd)
         std::copy(global_inventory_good_raw.begin(), global_inventory_good_raw.end(), global_inventory.goods.begin());
 
         auto countOfNotAvailableJobsInSaveGame =
-          sgd.getGameDataVersion() < 11 ? numWineAndLeatherAddonJobs : numLeatherAddonJobs;
+          (sgd.getGameDataVersion() < 11 ? numWineAndLeatherAddonJobs : numLeatherAddonJobs)
+          + numArcherTowerAddonJobs;
         std::vector<unsigned int> global_inventory_people_raw(global_inventory.people.size()
                                                               - countOfNotAvailableJobsInSaveGame);
         helpers::popContainer(sgd, global_inventory_people_raw, true);
         std::copy(global_inventory_people_raw.begin(), global_inventory_people_raw.end(),
                   global_inventory.people.begin());
+        global_inventory.people[Job::Archer] = 0;
 
         std::fill(global_inventory.armoredSoldiers.begin(), global_inventory.armoredSoldiers.end(), 0);
     } else
     {
         helpers::popContainer(sgd, global_inventory.goods);
-        helpers::popContainer(sgd, global_inventory.people);
+        if(sgd.getGameDataVersion() < 16)
+        {
+            std::vector<unsigned int> global_inventory_people_raw(global_inventory.people.size()
+                                                                  - numArcherTowerAddonJobs);
+            helpers::popContainer(sgd, global_inventory_people_raw, true);
+            std::copy(global_inventory_people_raw.begin(), global_inventory_people_raw.end(),
+                      global_inventory.people.begin());
+            global_inventory.people[Job::Archer] = 0;
+        } else
+            helpers::popContainer(sgd, global_inventory.people);
         helpers::popContainer(sgd, global_inventory.armoredSoldiers);
     }
 

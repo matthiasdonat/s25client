@@ -143,15 +143,19 @@ void ChangeDistribution::execute(GameWorld& world, uint8_t playerId)
 ChangeBuildOrder::ChangeBuildOrder(Deserializer& ser)
     : GameCommand(GCType::ChangeBuildOrder), useCustomBuildOrder(ser.popBool())
 {
-    if(ser.getDataVersion() >= 2)
+    if(ser.getDataVersion() >= 3)
     {
         for(BuildingType& i : data)
             i = helpers::popEnum<BuildingType>(ser);
     } else
     {
-        auto countOfNotAvailableBuildingsInSaveGame =
-          ser.getDataVersion() < 1 ? numWineAndLeatherAddonBuildings : numLeatherAddonBuildings;
-        std::vector<BuildingType> buildOrder(data.size() - countOfNotAvailableBuildingsInSaveGame);
+        // The archer tower is the last building type and not stored in older versions
+        const auto countOfNotAvailableBuildingsInSaveGame =
+          ser.getDataVersion() >= 2 ? 0u :
+                                      (ser.getDataVersion() < 1 ? numWineAndLeatherAddonBuildings :
+                                                                  numLeatherAddonBuildings);
+        std::vector<BuildingType> buildOrder(data.size() - numArcherTowerAddonBuildings
+                                             - countOfNotAvailableBuildingsInSaveGame);
 
         if(ser.getDataVersion() < 1)
             buildOrder.insert(buildOrder.end(), {BuildingType::Vineyard, BuildingType::Winery, BuildingType::Temple});
@@ -165,6 +169,7 @@ ChangeBuildOrder::ChangeBuildOrder(Deserializer& ser)
         std::generate(buildOrder.begin(), buildOrder.end() - countOfNotAvailableBuildingsInSaveGame,
                       [&]() { return helpers::popEnum<BuildingType>(ser); });
 
+        buildOrder.push_back(BuildingType::ArcherTower);
         std::copy(buildOrder.begin(), buildOrder.end(), data.begin());
     }
 }
@@ -281,10 +286,17 @@ SetAllInventorySettings::SetAllInventorySettings(Deserializer& ser)
     : Coords(GCType::SetAllInventorySettings, ser), isJob(ser.popBool())
 {
     const uint32_t numStates = (isJob ? helpers::NumEnumValues_v<Job> : helpers::NumEnumValues_v<GoodType>);
-    if(ser.getDataVersion() >= 2)
+    if(ser.getDataVersion() >= 3)
     {
         for(unsigned i = 0; i < numStates; i++)
             states.push_back(InventorySetting(ser.popUnsignedChar()));
+    } else if(ser.getDataVersion() == 2)
+    {
+        // The archer job is the last job and not stored in older versions
+        const unsigned numStoredStates = numStates - (isJob ? numArcherTowerAddonJobs : 0u);
+        for(unsigned i = 0; i < numStoredStates; i++)
+            states.push_back(InventorySetting(ser.popUnsignedChar()));
+        states.resize(numStates);
     } else
     {
         states.resize(numStates);
@@ -292,7 +304,7 @@ SetAllInventorySettings::SetAllInventorySettings(Deserializer& ser)
         {
             auto isJobSkipped = [&](Job const& job) {
                 return (ser.getDataVersion() < 1 && wineaddon::isWineAddonJobType(job))
-                       || leatheraddon::isLeatherAddonJobType(job);
+                       || leatheraddon::isLeatherAddonJobType(job) || job == Job::Archer;
             };
 
             size_t tgtIdx = 0;

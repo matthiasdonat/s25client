@@ -45,6 +45,9 @@ void BuildingRegister::deserialize(SerializedGameData& sgd)
             if(sgd.getGameDataVersion() < 12 && leatheraddon::isLeatherAddonBuildingType(bld))
                 continue;
 
+            if(sgd.getGameDataVersion() < 16 && bld == BuildingType::ArcherTower)
+                continue;
+
             if(BuildingProperties::isUsual(bld))
                 sgd.popObjectContainer(buildings[bld], GO_Type::NobUsual);
         }

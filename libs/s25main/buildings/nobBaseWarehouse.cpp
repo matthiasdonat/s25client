@@ -199,6 +199,9 @@ nobBaseWarehouse::nobBaseWarehouse(SerializedGameData& sgd, const unsigned obj_i
         if(sgd.getGameDataVersion() < 12 && leatheraddon::isLeatherAddonJobType(i))
             continue;
 
+        if(sgd.getGameDataVersion() < 16 && i == Job::Archer)
+            continue;
+
         inventory.visual.add(i, sgd.popUnsignedInt());
         inventory.real.add(i, sgd.popUnsignedInt());
         inventorySettings[i] = inventorySettingsVisual[i] = static_cast<InventorySetting>(sgd.popUnsignedChar());

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include "BurnedWarehouse.h"
+#include "AddonHelperFunctions.h"
 
 #include "EventManager.h"
 #include "GamePlayer.h"
@@ -29,7 +30,14 @@ BurnedWarehouse::BurnedWarehouse(const MapPoint pos, const unsigned char player,
 BurnedWarehouse::BurnedWarehouse(SerializedGameData& sgd, const unsigned obj_id)
     : noCoordBase(sgd, obj_id), player(sgd.popUnsignedChar()), go_out_phase(sgd.popUnsignedInt())
 {
-    helpers::popContainer(sgd, people.people);
+    if(sgd.getGameDataVersion() < 16)
+    {
+        std::vector<unsigned> peopleRaw(people.people.size() - numArcherTowerAddonJobs);
+        helpers::popContainer(sgd, peopleRaw, true);
+        std::copy(peopleRaw.begin(), peopleRaw.end(), people.people.begin());
+        people.people[Job::Archer] = 0;
+    } else
+        helpers::popContainer(sgd, people.people);
     if(sgd.getGameDataVersion() >= 12)
         helpers::popContainer(sgd, people.armoredSoldiers);
     else
