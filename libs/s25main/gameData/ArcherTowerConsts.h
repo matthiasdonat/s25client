@@ -28,7 +28,7 @@ constexpr unsigned ARCHER_SHOT_ANIMATION_GFS = 16;
 constexpr unsigned ARCHER_SEARCH_INTERVAL_GFS = 20;
 /// Offsets (from the building position) where the archers of a tower stand on the roof, indexed by slot
 constexpr std::array<std::array<int, 2>, MAX_ARCHERS_PER_TOWER> ARCHER_ROOF_OFFSETS{
-  {{-14, -26}, {-2, -26}, {-14, -18}, {-2, -18}}};
+  {{-10, -50}, {4, -50}, {-10, -44}, {4, -44}}};
 /// Time between two shots of an archer without wine, in game frames
 constexpr unsigned ARCHER_SHOT_INTERVAL_GFS = durationToGfs(std::chrono::seconds(7));
 /// Time between two shots of an archer while the wine boost lasts, in game frames
