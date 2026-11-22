@@ -13,7 +13,9 @@
 #include "buildings/nobArcherTower.h"
 #include "buildings/nobBaseWarehouse.h"
 #include "factories/BuildingFactory.h"
+#include "figures/ArcherTargeting.h"
 #include "figures/nofArcher.h"
+#include "figures/nofPassiveWorker.h"
 #include "figures/nofScout_Free.h"
 #include "worldFixtures/WorldWithGCExecution.h"
 #include "buildings/nobUsual.h"
@@ -534,6 +536,77 @@ BOOST_FIXTURE_TEST_CASE(ScoutDiesOnRangedHit, ArcherTowerFixture)
     BOOST_TEST(!findScout());
     BOOST_TEST(world.getFigures(scoutPos).empty());
     RTTR_SKIP_GFS(500);
+}
+
+namespace {
+ArcherTarget makeTarget(unsigned id, unsigned distance, unsigned rank, bool isScout = false)
+{
+    return ArcherTarget{nullptr, distance, rank, isScout, id};
+}
+} // namespace
+
+BOOST_AUTO_TEST_CASE(PriorityNearest)
+{
+    const std::vector<ArcherTarget> targets{makeTarget(1, 5, 4), makeTarget(2, 2, 0), makeTarget(3, 3, 2, true)};
+    BOOST_TEST_REQUIRE(chooseArcherTarget(targets, ArcherTargetPriority::Nearest));
+    BOOST_TEST(chooseArcherTarget(targets, ArcherTargetPriority::Nearest)->objectId == 2u);
+    BOOST_TEST(chooseArcherTarget({}, ArcherTargetPriority::Nearest) == nullptr);
+}
+
+BOOST_AUTO_TEST_CASE(PriorityWeakestPrefersScout)
+{
+    const std::vector<ArcherTarget> targets{makeTarget(1, 2, 0), makeTarget(2, 6, 0, true), makeTarget(3, 3, 1)};
+    // Scout (far away) beats the nearer private
+    BOOST_TEST(chooseArcherTarget(targets, ArcherTargetPriority::Weakest)->objectId == 2u);
+    const std::vector<ArcherTarget> soldiers{makeTarget(1, 2, 3), makeTarget(2, 6, 1), makeTarget(3, 3, 1)};
+    // Lowest rank wins, nearer one on equal rank
+    BOOST_TEST(chooseArcherTarget(soldiers, ArcherTargetPriority::Weakest)->objectId == 3u);
+}
+
+BOOST_AUTO_TEST_CASE(PriorityStrongestPrefersHighRankAndScoutLast)
+{
+    const std::vector<ArcherTarget> targets{makeTarget(1, 2, 0), makeTarget(2, 1, 0, true), makeTarget(3, 6, 4),
+                                            makeTarget(4, 3, 4)};
+    BOOST_TEST(chooseArcherTarget(targets, ArcherTargetPriority::Strongest)->objectId == 4u);
+    const std::vector<ArcherTarget> onlyScoutAndPrivate{makeTarget(1, 2, 0, true), makeTarget(2, 5, 0)};
+    BOOST_TEST(chooseArcherTarget(onlyScoutAndPrivate, ArcherTargetPriority::Strongest)->objectId == 2u);
+    const std::vector<ArcherTarget> onlyScout{makeTarget(1, 2, 0, true)};
+    BOOST_TEST(chooseArcherTarget(onlyScout, ArcherTargetPriority::Strongest)->objectId == 1u);
+}
+
+BOOST_AUTO_TEST_CASE(TieBreakIsDeterministic)
+{
+    const std::vector<ArcherTarget> targets{makeTarget(9, 3, 1), makeTarget(4, 3, 1), makeTarget(7, 3, 1)};
+    for(const auto prio : {ArcherTargetPriority::Nearest, ArcherTargetPriority::Weakest,
+                           ArcherTargetPriority::Strongest})
+        BOOST_TEST(chooseArcherTarget(targets, prio)->objectId == 4u);
+}
+
+BOOST_FIXTURE_TEST_CASE(FindsOnlyVisibleEnemyScoutsInRange, ArcherTowerFixtureT<WorldWithGCExecution2P>)
+{
+    const MapPoint towerPos = world.makeMapPoint(hqPos + Position(2, 0));
+    world.makeVisibleAroundPoint(towerPos, ARCHER_TOWER_RANGE + 2, 0);
+    const auto addScout = [&](unsigned owner, const Position& offset) -> nofScout_Free& {
+        const MapPoint pt = world.makeMapPoint(towerPos + offset);
+        return static_cast<nofScout_Free&>(world.addFigure(pt, std::make_unique<nofScout_Free>(pt, owner, nullptr)));
+    };
+    const auto addCivilian = [&](unsigned owner, const Position& offset) {
+        const MapPoint pt = world.makeMapPoint(towerPos + offset);
+        world.addFigure(pt, std::make_unique<nofPassiveWorker>(Job::Helper, pt, owner, nullptr));
+    };
+    auto& enemyScout = addScout(1, Position(3, 0));
+    addScout(0, Position(1, 0));                    // own
+    addCivilian(1, Position(0, 2));                 // civilian
+    addScout(1, Position(ARCHER_TOWER_RANGE + 1, 0)); // out of range
+    // Fogged enemy scout
+    const auto& fogged = addScout(1, Position(-2, 0));
+    world.getNodeWriteable(fogged.getPos()).fow[0].visibility = Visibility::FogOfWar;
+
+    const auto targets = findArcherTargets(world, towerPos, 0);
+    BOOST_TEST_REQUIRE(targets.size() == 1u);
+    BOOST_TEST(targets[0].figure == &enemyScout);
+    BOOST_TEST(targets[0].isScout);
+    BOOST_TEST(targets[0].distance == 3u);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
