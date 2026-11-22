@@ -110,6 +110,7 @@ iwWares::iwWares(unsigned id, const DrawPoint& pos, unsigned additionalYSpace, c
                                        Job::Winegrower,    Job::Vintner,
                                        Job::TempleServant, Job::Skinner,
                                        Job::Tanner,        Job::LeatherWorker,
+                                       Job::Archer,
                                        Job::Private,       Job::PrivateFirstClass,
                                        Job::Sergeant,      Job::Officer,
                                        Job::General};

@@ -135,7 +135,8 @@ BOOST_AUTO_TEST_CASE(AllBuildingTypesWork)
             BLD_TEMPLE,
             BLD_SKINNER,
             BLD_TANNERY,
-            BLD_LEATHERWORKS
+            BLD_LEATHERWORKS,
+            BLD_ARCHERTOWER
         )
     )LUA");
     executeLua(R"LUA(
@@ -189,7 +190,8 @@ BOOST_AUTO_TEST_CASE(AllJobTypesWork)
             JOB_TEMPLESERVANT,
             JOB_SKINNER,
             JOB_TANNER,
-            JOB_LEATHERWORKER
+            JOB_LEATHERWORKER,
+            JOB_ARCHER
         )
     )LUA");
     executeLua(R"LUA(

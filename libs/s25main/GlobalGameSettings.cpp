@@ -299,11 +299,14 @@ void GlobalGameSettings::deserialize(Serializer& ser)
             continue;
         }
 
-        setSelection(addon, status);
+        // Keep the transmitted state exactly (dependencies were already enforced by the sender)
+        if(auto* addonWithState = findAddon(addon))
+            addonWithState->status = status;
+        else
+            setSelection(addon, status);
     }
     if(migrateLegacyInexhaustibleMines)
         applyLegacyInexhaustibleMines();
-    enforceAddonDependencies();
 }
 
 /// Only mine types with an explicitly configured non-default behavior keep their setting. This is required because

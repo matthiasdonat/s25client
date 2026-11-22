@@ -62,6 +62,7 @@ LuaInterfaceGame::LuaInterfaceGame(Game& gameInstance, ILocalGameState& localGam
     ADD_LUA_CONST(Skinner);
     ADD_LUA_CONST(Tannery);
     ADD_LUA_CONST(LeatherWorks);
+    ADD_LUA_CONST(ArcherTower);
 #undef ADD_LUA_CONST
 
 #define ADD_LUA_CONST(name) lua["JOB_" + s25util::toUpper(#name)] = Job::name
@@ -103,6 +104,7 @@ LuaInterfaceGame::LuaInterfaceGame(Game& gameInstance, ILocalGameState& localGam
     ADD_LUA_CONST(Skinner);
     ADD_LUA_CONST(Tanner);
     ADD_LUA_CONST(LeatherWorker);
+    ADD_LUA_CONST(Archer);
 #undef ADD_LUA_CONST
 
 #define ADD_LUA_CONST(name) lua["STAT_" + s25util::toUpper(#name)] = StatisticType::name

@@ -19,6 +19,7 @@
 #include "world/GameWorldView.h"
 #include "world/GameWorldViewer.h"
 #include "gameTypes/GameTypesOutput.h"
+#include "gameData/ArcherTowerConsts.h"
 #include "gameData/JobConsts.h"
 #include "gameData/MilitaryConsts.h"
 #include "rttr/test/random.hpp"
@@ -75,6 +76,7 @@ BOOST_FIXTURE_TEST_CASE(getBuildingRadius, GameWorldViewFixture)
 
     BOOST_TEST(view.getBuildingRadius(BuildingType::LookoutTower) == VISUALRANGE_LOOKOUTTOWER);
     BOOST_TEST(view.getBuildingRadius(BuildingType::Catapult) == CATAPULT_MAX_TARGET_RANGE);
+    BOOST_TEST(view.getBuildingRadius(BuildingType::ArcherTower) == ARCHER_TOWER_RANGE);
     BOOST_TEST(view.getBuildingRadius(BuildingType::Hunter) == ANIMAL_RADIUS);
     BOOST_TEST(view.getBuildingRadius(BuildingType::Skinner) == ANIMAL_RADIUS);
 

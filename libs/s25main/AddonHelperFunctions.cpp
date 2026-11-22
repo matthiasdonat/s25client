@@ -18,9 +18,12 @@ std::function<bool(const BuildingType type)> makeIsUnusedBuilding(const GlobalGa
     const bool wineAddonActive = ggs.isEnabled(AddonId::WINE);
     const bool charburnerAddonActive = ggs.isEnabled(AddonId::CHARBURNER);
     const bool leatherAddonActive = ggs.isEnabled(AddonId::LEATHER);
+    const bool archerTowerActive = isArcherTowerActive(ggs);
 
-    return [wineAddonActive, charburnerAddonActive, leatherAddonActive](BuildingType const& bld) {
+    return [wineAddonActive, charburnerAddonActive, leatherAddonActive, archerTowerActive](BuildingType const& bld) {
         if(!wineAddonActive && wineaddon::isWineAddonBuildingType(bld))
+            return true;
+        if(!archerTowerActive && bld == BuildingType::ArcherTower)
             return true;
         if(!charburnerAddonActive && bld == BuildingType::Charburner)
             return true;
@@ -49,9 +52,12 @@ std::function<bool(const Job job)> makeIsUnusedJob(const GlobalGameSettings& ggs
     const bool wineAddonActive = ggs.isEnabled(AddonId::WINE);
     const bool charburnerAddonActive = ggs.isEnabled(AddonId::CHARBURNER);
     const bool leatherAddonActive = ggs.isEnabled(AddonId::LEATHER);
+    const bool archerTowerActive = isArcherTowerActive(ggs);
 
-    return [wineAddonActive, charburnerAddonActive, leatherAddonActive](Job const& job) {
+    return [wineAddonActive, charburnerAddonActive, leatherAddonActive, archerTowerActive](Job const& job) {
         if(!wineAddonActive && wineaddon::isWineAddonJobType(job))
+            return true;
+        if(!archerTowerActive && job == Job::Archer)
             return true;
         if(!charburnerAddonActive && job == Job::CharBurner)
             return true;

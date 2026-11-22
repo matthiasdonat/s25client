@@ -219,6 +219,8 @@ ITexture* Loader::getJobTex(Job job)
         return wineaddon::getJobTex(job);
     else if(leatheraddon::isLeatherAddonJobType(job))
         return leatheraddon::getJobTex(job);
+    else if(job == Job::Archer) // Archers look like hunters
+        return getMapTexture(2300 + rttr::enumCast(Job::Hunter));
     else
         return (job == Job::CharBurner) ? getTextureN("io_new", 5) : getMapTexture(2300 + rttr::enumCast(job));
 }

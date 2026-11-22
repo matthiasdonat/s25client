@@ -49,6 +49,7 @@ const helpers::EnumArray<const char*, BuildingType> BUILDING_NAMES = {
   gettext_noop("Farm"),
   gettext_noop("Donkey breeding"),
   gettext_noop("Harbor building"),
+  gettext_noop("Archer tower"),
 };
 
 const helpers::EnumArray<const char*, BuildingType> BUILDING_HELP_STRINGS = {{
@@ -322,6 +323,9 @@ const helpers::EnumArray<const char*, BuildingType> BUILDING_HELP_STRINGS = {{
                "this, first choose the relevant "
                "icon followed by the desired "
                "merchandise or job symbol."),
+  // Archer tower
+  gettext_noop("Archers in the tower shoot at enemy soldiers and scouts nearby. "
+               "Wine lets an archer shoot faster for a while."),
 }};
 
 const helpers::MultiEnumArray<SmokeConst, Nation, BuildingType> BUILDING_SMOKE_CONSTS = []() {

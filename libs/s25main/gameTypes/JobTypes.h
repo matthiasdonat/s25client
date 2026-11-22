@@ -48,11 +48,12 @@ enum class Job : uint8_t
     Skinner,           // 35
     Tanner,            // 36
     LeatherWorker,     // 37
+    Archer,            // 38
 };
 
 constexpr auto maxEnumValue(Job)
 {
-    return Job::LeatherWorker;
+    return Job::Archer;
 }
 
 /// Job types of soldiers, weak ones first

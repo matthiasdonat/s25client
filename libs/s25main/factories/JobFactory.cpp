@@ -124,6 +124,7 @@ std::unique_ptr<noFigure> JobFactory::createJob(const Job jobId, const MapPoint 
         case Job::BoatCarrier:
             throw std::logic_error("Cannot create a boat carrier job (try creating Job::Helper).");
             break;
+        case Job::Archer: break; // Needs a tower as goal, see nobArcherTower
     }
     throw std::logic_error("Invalid job type " + helpers::toString(jobId));
 }
