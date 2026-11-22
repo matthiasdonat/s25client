@@ -6,6 +6,7 @@
 #include "RttrForeachPt.h"
 #include "ai/AIPlayer.h"
 #include "ai/aijh/AIPlayerJH.h"
+#include "addons/const_addons.h"
 #include "buildings/noBuilding.h"
 #include "buildings/noBuildingSite.h"
 #include "buildings/nobBaseWarehouse.h"
@@ -417,6 +418,30 @@ BOOST_FIXTURE_TEST_CASE(BuildWoodIndustry, WorldWithGCExecution<1>)
     BOOST_TEST(playerHasBld(player, BuildingType::Sawmill));
     BOOST_TEST(playerHasBld(player, BuildingType::Woodcutter));
     BOOST_TEST(playerHasBld(player, BuildingType::Forester));
+}
+
+BOOST_FIXTURE_TEST_CASE(AIIgnoresArcherTowerAddon, WorldWithGCExecution<1>)
+{
+    ggs.setSelection(AddonId::ARCHER_TOWER, 1);
+    // A tower of the player that the AI did not plan must not confuse it
+    BuildingFactory::createBuilding(world, BuildingType::ArcherTower, hqPos + MapPoint(3, 0), curPlayer,
+                                    Nation::Romans);
+    const GamePlayer& player = world.getPlayer(curPlayer);
+    auto ai = AIFactory::create(AI::Info(AI::Type::Default, AI::Level::Hard), curPlayer, world);
+    for(unsigned gf = 0; gf < 3000;)
+    {
+        std::vector<gc::GameCommandPtr> aiGcs = ai->fetchGameCommands();
+        for(unsigned i = 0; i < 5; i++, gf++)
+        {
+            em.executeNextGF();
+            ai->runGF(em.getCurrentGF(), i == 0);
+        }
+        for(gc::GameCommandPtr& gc : aiGcs)
+            gc->execute(world, curPlayer);
+    }
+    // The AI never builds one on its own
+    BOOST_TEST(player.getBuildingRegister().getBuildings(BuildingType::ArcherTower).size() == 1u);
+    BOOST_TEST(playerHasBld(player, BuildingType::Woodcutter));
 }
 
 namespace {
